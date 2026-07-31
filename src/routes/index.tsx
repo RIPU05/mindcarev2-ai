@@ -1,20 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { Navbar } from "@/components/site/navbar";
-import { Hero } from "@/components/site/hero";
-import { Trust } from "@/components/site/trust";
-import { Features } from "@/components/site/features";
-import { HowItWorks } from "@/components/site/how-it-works";
-import { DashboardPreview } from "@/components/site/dashboard-preview";
-import { Reflection } from "@/components/site/reflection";
-import { Testimonials } from "@/components/site/testimonials";
-import { Faq } from "@/components/site/faq";
-import { CtaBanner } from "@/components/site/cta-banner";
-import { Footer } from "@/components/site/footer";
+import { StoryChrome, StoryFooter } from "@/components/story/chrome";
+import { Opening } from "@/components/story/opening";
+import { Writing } from "@/components/story/writing";
+import { Reading } from "@/components/story/reading";
+import { Emotions } from "@/components/story/emotions";
+import { ReflectionLetter } from "@/components/story/reflection-letter";
+import { Growth } from "@/components/story/growth";
+import { Assistant } from "@/components/story/assistant";
+import { Privacy } from "@/components/story/privacy";
+import { Closing } from "@/components/story/closing";
 
-const title = "MindCare AI — Private AI journaling for emotional wellbeing";
+const title = "MindCare — the story of one journal entry";
 const description =
-  "A private space to journal, understand your emotions, and see how your wellbeing changes over time. Encrypted, ad-free, never used to train AI.";
+  "A private journaling companion. Follow a single evening's entry as it is written, read, understood and remembered — quietly, and entirely on your terms.";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -33,19 +32,19 @@ export const Route = createFileRoute("/")({
 function Index() {
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
+      <StoryChrome />
       <main>
-        <Hero />
-        <Trust />
-        <Features />
-        <HowItWorks />
-        <DashboardPreview />
-        <Reflection />
-        <Testimonials />
-        <Faq />
-        <CtaBanner />
+        <Opening />
+        <Writing />
+        <Reading />
+        <Emotions />
+        <ReflectionLetter />
+        <Growth />
+        <Assistant />
+        <Privacy />
+        <Closing />
       </main>
-      <Footer />
+      <StoryFooter />
     </div>
   );
 }

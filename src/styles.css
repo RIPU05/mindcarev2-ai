@@ -21,6 +21,7 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-surface: var(--surface);
+  --color-paper: var(--paper);
   --color-surface-warm: var(--surface-warm);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
@@ -69,7 +70,8 @@
   --radius: 0.875rem;
   --background: oklch(0.9823 0.0029 84.56);
   --foreground: oklch(0.2393 0 89.88);
-  --surface: oklch(0.9636 0.0027 106.45);
+  --surface: oklch(1 0 89.88);
+  --paper: oklch(0.9636 0.0142 84.5);
   --surface-warm: oklch(0.9709 0.0045 78.3);
   --card: oklch(1 0 89.88);
   --card-foreground: oklch(0.2393 0 89.88);

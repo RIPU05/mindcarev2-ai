@@ -1,24 +1,51 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
+import { Navbar } from "@/components/site/navbar";
+import { Hero } from "@/components/site/hero";
+import { Trust } from "@/components/site/trust";
+import { Features } from "@/components/site/features";
+import { HowItWorks } from "@/components/site/how-it-works";
+import { DashboardPreview } from "@/components/site/dashboard-preview";
+import { Reflection } from "@/components/site/reflection";
+import { Testimonials } from "@/components/site/testimonials";
+import { Faq } from "@/components/site/faq";
+import { CtaBanner } from "@/components/site/cta-banner";
+import { Footer } from "@/components/site/footer";
+
+const title = "MindCare AI — Private AI journaling for emotional wellbeing";
+const description =
+  "A private space to journal, understand your emotions, and see how your wellbeing changes over time. Encrypted, ad-free, never used to train AI.";
+
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title },
+      { name: "description", content: description },
+      { property: "og:title", content: title },
+      { property: "og:description", content: description },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
   component: Index,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
 function Index() {
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
+    <div className="min-h-screen bg-background">
+      <Navbar />
+      <main>
+        <Hero />
+        <Trust />
+        <Features />
+        <HowItWorks />
+        <DashboardPreview />
+        <Reflection />
+        <Testimonials />
+        <Faq />
+        <CtaBanner />
+      </main>
+      <Footer />
     </div>
   );
 }

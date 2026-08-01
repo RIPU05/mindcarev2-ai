@@ -4,12 +4,14 @@ from uuid import UUID
 from pydantic import Field
 
 from app.schemas.common import ApiSchema, mock_id, mock_timestamp
+from app.schemas.enums import JournalSource
 
 
 class JournalCreateRequest(ApiSchema):
     title: str | None = Field(default=None, max_length=160)
     content: str = Field(min_length=1, max_length=20000)
     tags: list[str] = Field(default_factory=list)
+    source: JournalSource = JournalSource.MANUAL
 
 
 class JournalUpdateRequest(ApiSchema):
@@ -23,6 +25,8 @@ class JournalResponse(ApiSchema):
     title: str | None
     content: str
     tags: list[str]
+    source: JournalSource
+    version: int
     created_at: datetime
     updated_at: datetime
 
@@ -34,6 +38,8 @@ class JournalResponse(ApiSchema):
             title="Sample journal entry",
             content="This is a mock journal entry for API contract validation.",
             tags=["reflection"],
+            source=JournalSource.MANUAL,
+            version=1,
             created_at=now,
             updated_at=now,
         )

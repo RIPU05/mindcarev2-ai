@@ -4,6 +4,9 @@ import sys
 from datetime import datetime, timezone
 from typing import Any
 
+from sqlalchemy import event
+from sqlalchemy.engine import Engine
+
 
 class JsonFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
@@ -32,6 +35,25 @@ def configure_logging() -> None:
     root_logger.handlers.clear()
     root_logger.addHandler(handler)
     root_logger.setLevel(logging.INFO)
+
+    logging.getLogger("uvicorn.access").handlers.clear()
+
+
+def configure_database_logging() -> None:
+    @event.listens_for(Engine, "before_cursor_execute")
+    def before_cursor_execute(conn, cursor, statement, parameters, context, executemany) -> None:
+        context._mindcare_query_start = datetime.now(timezone.utc)
+
+    @event.listens_for(Engine, "after_cursor_execute")
+    def after_cursor_execute(conn, cursor, statement, parameters, context, executemany) -> None:
+        started_at = getattr(context, "_mindcare_query_start", None)
+        if started_at is None:
+            return
+        duration_ms = (datetime.now(timezone.utc) - started_at).total_seconds() * 1000
+        logging.getLogger("app.db").info(
+            "database_query_completed",
+            extra={"duration_ms": round(duration_ms, 2)},
+        )
 
 
 def get_logger(name: str) -> logging.Logger:

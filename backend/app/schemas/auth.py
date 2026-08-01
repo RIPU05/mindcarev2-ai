@@ -35,13 +35,18 @@ class UserSummary(ApiSchema):
 
 class AuthTokenResponse(ApiSchema):
     access_token: str
+    refresh_token: str | None = None
     token_type: str = "bearer"
     expires_in: int
     user: UserSummary
 
     @classmethod
     def mock(cls) -> "AuthTokenResponse":
-        return cls(access_token="mock_access_token", expires_in=3600, user=UserSummary.mock())
+        return cls(access_token="mock_access_token", refresh_token="mock_refresh_token", expires_in=3600, user=UserSummary.mock())
+
+
+class RefreshSessionRequest(ApiSchema):
+    refresh_token: str = Field(min_length=1)
 
 
 class LogoutResponse(ApiSchema):

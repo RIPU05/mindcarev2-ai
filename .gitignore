@@ -5,6 +5,11 @@ __pycache__/
 *.pyd
 .Python
 *.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage/
 dist/
 build/
 *.egg
@@ -21,6 +26,8 @@ env/
 
 # Models (large binary artifacts — train locally or store in DVC/cloud)
 models/
+!backend/app/models/
+!backend/app/models/**/*.py
 
 # Raw data (large, re-downloadable)
 data/raw/
@@ -46,12 +53,16 @@ Thumbs.db
 
 # Logs and temp
 *.log
+*.tmp
+*.temp
 /tmp/
+tmp/
 
 # Node / Next.js
 node_modules/
 .next/
 out/
+coverage/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

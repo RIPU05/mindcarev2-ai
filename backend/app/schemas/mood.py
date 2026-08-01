@@ -4,13 +4,14 @@ from uuid import UUID
 from pydantic import Field
 
 from app.schemas.common import ApiSchema, mock_id, mock_timestamp
+from app.schemas.enums import AnalysisInputType
 
 
 class MoodHistoryResponse(ApiSchema):
     id: UUID
     primary_mood: str
     confidence: float = Field(ge=0, le=1)
-    source: str
+    source: AnalysisInputType
     created_at: datetime
 
     @classmethod
@@ -19,7 +20,7 @@ class MoodHistoryResponse(ApiSchema):
             id=id or mock_id(),
             primary_mood="neutral",
             confidence=0.0,
-            source="text",
+            source=AnalysisInputType.TEXT,
             created_at=mock_timestamp(),
         )
 

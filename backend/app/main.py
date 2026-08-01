@@ -8,31 +8,68 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.v1.router import api_router
+from app.auth.middleware import JWTContextMiddleware
 from app.core.config import settings
-from app.core.logging import configure_logging, get_logger
-from app.core.middleware import RequestContextMiddleware
+from app.core.logging import configure_database_logging, configure_logging, get_logger
+from app.core.middleware import (
+    GZipMiddleware,
+    RateLimitPlaceholderMiddleware,
+    RequestContextMiddleware,
+    SecurityHeadersMiddleware,
+    TrustedHostMiddleware,
+)
+from app.db.database import dispose_database_engine, verify_database_connection
+from app.exceptions import MindCareException
 
 logger = get_logger(__name__)
+
+openapi_tags = [
+    {"name": "auth", "description": "Supabase Auth JWT contract and current-user endpoints."},
+    {"name": "journal", "description": "Journal entry request and response contracts."},
+    {"name": "analysis", "description": "Mood analysis request and status contracts."},
+    {"name": "moods", "description": "Mood check-in and history contracts."},
+    {"name": "dashboard", "description": "Dashboard aggregate contracts."},
+    {"name": "assistant", "description": "Assistant conversation contracts."},
+    {"name": "profile", "description": "User profile contracts."},
+    {"name": "health", "description": "Service health and readiness checks."},
+]
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     configure_logging()
+    configure_database_logging()
     logger.info(
         "application_startup",
         extra={"app_name": settings.app_name, "version": settings.app_version},
     )
-    yield
-    logger.info("application_shutdown", extra={"app_name": settings.app_name})
+    await verify_database_connection()
+    try:
+        yield
+    finally:
+        await dispose_database_engine()
+        logger.info("application_shutdown", extra={"app_name": settings.app_name})
 
 
 def create_app() -> FastAPI:
     app = FastAPI(
         title=settings.app_name,
         version=settings.app_version,
+        description=(
+            "MindCare AI v2 backend API. This sprint wires backend infrastructure only: "
+            "database, repositories, authentication, middleware, exceptions, and contracts."
+        ),
+        summary="MindCare AI backend infrastructure API",
+        openapi_tags=openapi_tags,
         lifespan=lifespan,
+        debug=settings.debug,
     )
 
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.trusted_hosts)
+    app.add_middleware(GZipMiddleware, minimum_size=1000)
+    app.add_middleware(SecurityHeadersMiddleware)
+    app.add_middleware(RateLimitPlaceholderMiddleware)
+    app.add_middleware(JWTContextMiddleware)
     app.add_middleware(RequestContextMiddleware)
     app.add_middleware(
         CORSMiddleware,
@@ -50,6 +87,27 @@ def create_app() -> FastAPI:
 
 
 def register_exception_handlers(app: FastAPI) -> None:
+    @app.exception_handler(MindCareException)
+    async def mindcare_exception_handler(request: Request, exc: MindCareException) -> JSONResponse:
+        logger.warning(
+            "application_exception",
+            extra={
+                "request_id": getattr(request.state, "request_id", None),
+                "code": exc.code,
+                "path": request.url.path,
+            },
+        )
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={
+                "code": exc.code,
+                "message": exc.message,
+                "details": exc.details,
+                "request_id": getattr(request.state, "request_id", None),
+            },
+            headers={"WWW-Authenticate": "Bearer"} if exc.status_code == 401 else None,
+        )
+
     @app.exception_handler(StarletteHTTPException)
     async def http_exception_handler(
         request: Request, exc: StarletteHTTPException

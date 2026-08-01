@@ -46,6 +46,21 @@ async def create_journal_entry(
             )
         )
         await uow.commit()
+
+        import asyncio
+        from app.rag.embeddings import generate_and_store_embedding
+        from app.rag.types import RetrievalSource
+
+        asyncio.create_task(
+            generate_and_store_embedding(
+                text=entry.content,
+                source=RetrievalSource.JOURNAL,
+                document_id=str(entry.id),
+                user_id=entry.user_id,
+                metadata={"title": entry.title},
+            )
+        )
+
         return journal_response(entry)
 
 
@@ -118,6 +133,21 @@ async def update_journal_entry(
         entry.version += 1
         await repository.update(entry)
         await uow.commit()
+
+        import asyncio
+        from app.rag.embeddings import generate_and_store_embedding
+        from app.rag.types import RetrievalSource
+
+        asyncio.create_task(
+            generate_and_store_embedding(
+                text=entry.content,
+                source=RetrievalSource.JOURNAL,
+                document_id=str(entry.id),
+                user_id=entry.user_id,
+                metadata={"title": entry.title},
+            )
+        )
+
         return journal_response(entry)
 
 

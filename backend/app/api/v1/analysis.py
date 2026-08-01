@@ -105,6 +105,20 @@ async def analyze_text(
                 "follow_up_questions": reflection.follow_up_questions,
                 "safety": safety.model_dump(mode="json"),
             }
+            if reflection.reflection:
+                import asyncio
+                from app.rag.embeddings import generate_and_store_embedding
+                from app.rag.types import RetrievalSource
+
+                asyncio.create_task(
+                    generate_and_store_embedding(
+                        text=reflection.reflection,
+                        source=RetrievalSource.REFLECTION,
+                        document_id=str(analysis.id),
+                        user_id=analysis.user_id,
+                        metadata={"summary": reflection.summary},
+                    )
+                )
         except AIProviderError as exc:
             completed_at = datetime.now(UTC)
             analysis.status = AnalysisStatus.FAILED

@@ -21,8 +21,7 @@ register_provider("ollama", lambda: OllamaProvider())
 
 @lru_cache
 def get_ai_provider(provider_name: str | None = None) -> AIProvider:
+    from app.ai.providers.reliable import ReliableAIProviderWrapper
+
     selected = (provider_name or settings.default_ai_provider).lower()
-    builder = get_provider_builder(selected)
-    if builder is None:
-        raise AIProviderError(f"AI provider '{selected}' is not registered.")
-    return builder()
+    return ReliableAIProviderWrapper(selected)

@@ -8,7 +8,10 @@ class PipelineStage(StrEnum):
     JOURNAL = "journal"
     SAFETY_SCREENING = "safety_screening"
     EMOTION_ANALYSIS = "emotion_analysis"
+    MOOD_ANALYSIS = "mood_analysis"
     REFLECTION_GENERATION = "reflection_generation"
+    SUGGESTIONS = "suggestions"
+    FOLLOW_UP_QUESTIONS = "follow_up_questions"
     DASHBOARD = "dashboard"
 
 

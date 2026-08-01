@@ -19,3 +19,7 @@ class ReflectionResult(BaseModel):
     follow_up_questions: list[str] = Field(default_factory=list)
     provider: str | None = None
     model: str | None = None
+    latency_ms: int | None = None
+    request_id: str | None = None
+    token_usage: dict | None = None
+    cost_usd: str | None = None

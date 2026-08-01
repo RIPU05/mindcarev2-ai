@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends
 
+from app.ai import get_ai_provider
 from app.auth.dependencies import get_current_user
 from app.db.uow import UnitOfWork
 from app.exceptions import NotFoundException
@@ -10,6 +11,7 @@ from app.repositories.journal import JournalRepository
 from app.schemas.assistant import AssistantChatRequest, AssistantChatResponse
 from app.schemas.common import ErrorResponse
 from app.schemas.enums import AssistantRole
+from app.services.ai_json import parse_json_object
 
 router = APIRouter(prefix="/assistant", tags=["assistant"], dependencies=[Depends(get_current_user)])
 
@@ -62,12 +64,32 @@ async def chat(
                 message_metadata={"journal_id": str(payload.journal_id) if payload.journal_id else None},
             )
         )
+        provider = get_ai_provider()
+        response = await provider.summarize(
+            payload.message,
+            context={"journal_id": str(payload.journal_id) if payload.journal_id else None},
+        )
+        try:
+            content = str(parse_json_object(response.content).get("summary", response.content))
+        except ValueError:
+            content = response.content
         assistant_message = await messages.add(
             AssistantMessage(
                 conversation_id=conversation.id,
                 role=AssistantRole.ASSISTANT,
-                content="Assistant intelligence is not enabled yet.",
-                message_metadata={"ai_pending": True},
+                content=content,
+                message_metadata={
+                    "provider": response.provider,
+                    "model": response.model,
+                    "latency_ms": response.latency_ms,
+                    "request_id": response.request_id,
+                    "cost_usd": str(response.cost_usd) if response.cost_usd is not None else None,
+                    "token_usage": {
+                        "input_tokens": response.token_usage.input_tokens,
+                        "output_tokens": response.token_usage.output_tokens,
+                        "total_tokens": response.token_usage.total_tokens,
+                    },
+                },
             )
         )
         await uow.commit()
@@ -76,6 +98,12 @@ async def chat(
             message_id=assistant_message.id,
             role=assistant_message.role,
             content=assistant_message.content,
-            ai_metadata=None,
+            ai_metadata={
+                "provider": response.provider,
+                "provider_model": response.model,
+                "provider_latency_ms": response.latency_ms,
+                "provider_cost": str(response.cost_usd) if response.cost_usd is not None else None,
+                "provider_request_id": response.request_id,
+            },
             created_at=assistant_message.created_at,
         )

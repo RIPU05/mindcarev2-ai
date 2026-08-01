@@ -1,6 +1,7 @@
 import { motion } from "motion/react";
 
-import { Chapter, FadeIn, EASE } from "@/components/story/primitives";
+import { Chapter, FadeIn, EASE, Parallax } from "@/components/story/primitives";
+
 
 const blobs = [
   { label: "Tired", x: 26, y: 34, r: 21, color: "var(--color-primary)", o: 0.5 },
@@ -13,8 +14,9 @@ const blobs = [
 export function Emotions() {
   return (
     <Chapter id="emotions" index="III" label="Emotion map" tone="paper">
-      <div className="grid gap-14 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:gap-20">
-        <div>
+      <div className="grid gap-14 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:gap-24">
+        <div className="lg:sticky lg:top-32 lg:self-start">
+
           <FadeIn>
             <h2 className="font-display text-3xl leading-[1.14] sm:text-[2.6rem]">
               Words become
@@ -51,7 +53,9 @@ export function Emotions() {
         </div>
 
         <FadeIn delay={0.15}>
-          <div className="relative aspect-square w-full overflow-hidden rounded-[32px] border border-border bg-surface shadow-panel">
+          <Parallax distance={34}>
+          <div className="relative aspect-square w-full overflow-hidden rounded-[32px] border border-border bg-surface shadow-panel card-lift">
+
             <svg
               viewBox="0 0 100 100"
               className="size-full"
@@ -97,7 +101,9 @@ export function Emotions() {
               ))}
             </svg>
           </div>
+          </Parallax>
         </FadeIn>
+
       </div>
     </Chapter>
   );

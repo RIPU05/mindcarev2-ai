@@ -10,8 +10,9 @@ const bands: MoodKey[] = ["low", "flat", "steady", "warm", "bright"];
 /** The real editor: title, live word count, mood picker, tags, autosave. */
 export function JournalEditor({ typing = true }: { typing?: boolean }) {
   const { ref, inView } = useInViewOnce<HTMLDivElement>("-15% 0px");
-  const typed = useTypewriter(entry.paragraphs[0], 22, typing && inView);
-  const first = typing ? typed : entry.paragraphs[0];
+  const opener = entry.paragraphs[0] ?? "";
+  const typed = useTypewriter(opener, 22, typing && inView);
+  const first = typing ? typed : opener;
 
   return (
     <div ref={ref}>
@@ -31,7 +32,7 @@ export function JournalEditor({ typing = true }: { typing?: boolean }) {
             <div className="rounded-2xl bg-paper p-5 sm:p-7">
               <p className="font-display text-[1.02rem] leading-[1.95rem] text-foreground/90 sm:text-[1.12rem] sm:leading-[2.15rem]">
                 {first}
-                {typing && first.length < entry.paragraphs[0].length ? <Caret /> : null}
+                {typing && first.length < opener.length ? <Caret /> : null}
               </p>
               {entry.paragraphs.slice(1).map((p, i) => (
                 <motion.p

@@ -1,9 +1,65 @@
-import { motion, useInView } from "motion/react";
+import { motion, useInView, useScroll, useTransform } from "motion/react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 
 export const EASE = [0.16, 1, 0.3, 1] as const;
+
+type Tone = "base" | "paper" | "deep";
+
+const toneBg: Record<Tone, string> = {
+  base: "var(--color-background)",
+  paper: "var(--color-paper)",
+  deep: "var(--color-primary-deep)",
+};
+
+/**
+ * Seam — dissolves the hard edge between two chapters so the page reads as
+ * one continuous surface rather than stacked sections.
+ */
+export function Seam({
+  from,
+  to,
+  height = 140,
+}: {
+  from: Tone;
+  to: Tone;
+  height?: number;
+}) {
+  return (
+    <div
+      aria-hidden
+      className="pointer-events-none -my-px w-full"
+      style={{
+        height,
+        background: `linear-gradient(to bottom, ${toneBg[from]}, ${toneBg[to]})`,
+      }}
+    />
+  );
+}
+
+/** Gentle scroll parallax for any block of content. */
+export function Parallax({
+  children,
+  distance = 60,
+  className,
+}: {
+  children: ReactNode;
+  distance?: number;
+  className?: string;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start end", "end start"],
+  });
+  const y = useTransform(scrollYProgress, [0, 1], [distance, -distance]);
+  return (
+    <div ref={ref} className={className}>
+      <motion.div style={{ y }}>{children}</motion.div>
+    </div>
+  );
+}
 
 export function Chapter({
   id,
@@ -18,14 +74,14 @@ export function Chapter({
   label?: string;
   children: ReactNode;
   className?: string;
-  tone?: "base" | "paper" | "deep";
+  tone?: Tone;
 }) {
   return (
     <section
       id={id}
       aria-label={label}
       className={cn(
-        "relative px-6 py-32 sm:px-10 md:py-44",
+        "relative px-6 py-40 sm:px-10 md:py-56",
         tone === "paper" && "bg-paper",
         tone === "deep" && "bg-primary-deep text-primary-foreground",
         className,
@@ -33,13 +89,17 @@ export function Chapter({
     >
       <div className="mx-auto w-full max-w-5xl">
         {index || label ? (
-          <FadeIn className="mb-16 flex items-center gap-4">
+          <FadeIn className="mb-20 flex items-center gap-4">
             {index ? (
               <span className="font-display text-sm italic opacity-60">{index}</span>
             ) : null}
-            <span
+            <motion.span
               aria-hidden
-              className="h-px w-10 bg-current opacity-25"
+              className="h-px w-10 origin-left bg-current opacity-25"
+              initial={{ scaleX: 0 }}
+              whileInView={{ scaleX: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 1.2, ease: EASE }}
             />
             {label ? (
               <span className="text-[0.7rem] font-medium uppercase tracking-[0.22em] opacity-60">
@@ -53,6 +113,7 @@ export function Chapter({
     </section>
   );
 }
+
 
 export function FadeIn({
   children,

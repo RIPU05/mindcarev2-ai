@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { motion } from "motion/react";
 
 import { StoryChrome, StoryFooter } from "@/components/story/chrome";
+import { Seam, EASE } from "@/components/story/primitives";
 import { Opening } from "@/components/story/opening";
 import { Writing } from "@/components/story/writing";
 import { Reading } from "@/components/story/reading";
@@ -10,6 +12,7 @@ import { Growth } from "@/components/story/growth";
 import { Assistant } from "@/components/story/assistant";
 import { Privacy } from "@/components/story/privacy";
 import { Closing } from "@/components/story/closing";
+
 
 const title = "MindCare — the story of one journal entry";
 const description =

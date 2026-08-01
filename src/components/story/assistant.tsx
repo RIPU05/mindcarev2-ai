@@ -48,8 +48,8 @@ export function Assistant() {
               transition={{ duration: 1.1, delay: i * 0.12, ease: EASE }}
               className={
                 c.from === "You"
-                  ? "rounded-[22px] border border-border bg-paper p-6 sm:p-8"
-                  : "rounded-[22px] border border-border bg-primary-soft p-6 sm:p-8"
+                  ? "rounded-[22px] border border-border bg-paper p-6 card-lift sm:p-8"
+                  : "rounded-[22px] border border-border bg-primary-soft p-6 card-lift sm:p-8"
               }
             >
               <p className="text-[0.66rem] uppercase tracking-[0.22em] text-muted-foreground">

@@ -38,9 +38,9 @@ export function Growth() {
         </FadeIn>
       </div>
 
-      <div className="mt-16 grid gap-6 md:grid-cols-3">
+      <div className="mt-20 grid gap-6 md:grid-cols-3">
         <FadeIn className="md:col-span-2">
-          <div className="h-full rounded-[26px] border border-border bg-surface p-7 shadow-soft sm:p-9">
+          <div className="h-full rounded-[26px] border border-border bg-surface p-7 shadow-soft card-lift sm:p-9">
             <div className="flex items-baseline justify-between">
               <p className="text-[0.68rem] uppercase tracking-[0.2em] text-muted-foreground">
                 Mood, last fourteen entries
@@ -73,7 +73,7 @@ export function Growth() {
         </FadeIn>
 
         <FadeIn delay={0.1}>
-          <div className="h-full rounded-[26px] border border-border bg-surface p-7 shadow-soft">
+          <div className="h-full rounded-[26px] border border-border bg-surface p-7 shadow-soft card-lift">
             <p className="text-[0.68rem] uppercase tracking-[0.2em] text-muted-foreground">
               This month
             </p>
@@ -107,7 +107,7 @@ export function Growth() {
           { k: "Longest run", v: "11 days" },
         ].map((item, i) => (
           <FadeIn key={item.k} delay={0.05 * i}>
-            <div className="rounded-[26px] border border-border bg-surface p-7 shadow-soft">
+            <div className="rounded-[26px] border border-border bg-surface p-7 shadow-soft card-lift">
               <p className="text-[0.68rem] uppercase tracking-[0.2em] text-muted-foreground">
                 {item.k}
               </p>

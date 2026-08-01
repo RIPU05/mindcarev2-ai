@@ -36,7 +36,7 @@ export function ReflectionLetter() {
         </div>
 
         <FadeIn delay={0.1}>
-          <article className="rounded-[30px] border border-border bg-card p-8 shadow-panel sm:p-14">
+          <article className="rounded-[30px] border border-border bg-card p-8 shadow-panel card-lift sm:p-14">
             <p className="text-[0.68rem] uppercase tracking-[0.22em] text-muted-foreground">
               For you · Thursday
             </p>

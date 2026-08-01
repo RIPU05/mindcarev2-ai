@@ -26,7 +26,7 @@ export function Reading() {
         </FadeIn>
       </div>
 
-      <div className="mt-16 grid gap-12 lg:grid-cols-[1.2fr_0.8fr] lg:gap-16">
+      <div className="mt-20 grid gap-12 lg:grid-cols-[1.2fr_0.8fr] lg:gap-16">
         <FadeIn delay={0.1}>
           <p className="font-display text-xl leading-[2.3rem] text-foreground/85 sm:text-[1.5rem] sm:leading-[2.9rem]">
             {fragments.map((f, i) =>
@@ -49,7 +49,7 @@ export function Reading() {
           </p>
         </FadeIn>
 
-        <ul className="space-y-5">
+        <ul className="space-y-5 lg:sticky lg:top-32 lg:self-start">
           {fragments
             .filter((f) => f.note)
             .map((f, i) => (
@@ -59,7 +59,7 @@ export function Reading() {
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true, margin: "-15% 0px" }}
                 transition={{ duration: 1.1, delay: 0.9 + i * 0.35, ease: EASE }}
-                className="relative rounded-2xl border border-border bg-card p-5 shadow-soft"
+                className="relative rounded-2xl border border-border bg-card p-5 shadow-soft card-lift"
               >
                 <span
                   aria-hidden

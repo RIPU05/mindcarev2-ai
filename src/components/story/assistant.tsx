@@ -1,25 +1,5 @@
-import { motion } from "motion/react";
-
-import { Chapter, FadeIn, EASE } from "@/components/story/primitives";
-
-const cards = [
-  {
-    from: "You",
-    text: "I keep saying yes to things I don't want to do.",
-  },
-  {
-    from: "MindCare",
-    text: "You wrote something close to this in March. Back then you said yes felt cheaper than explaining. Does that still fit?",
-  },
-  {
-    from: "You",
-    text: "Yes. Explaining feels like asking permission.",
-  },
-  {
-    from: "MindCare",
-    text: "Then maybe the practice isn't saying no. It's letting an answer stand without a reason attached to it.",
-  },
-];
+import { Chapter, FadeIn } from "@/components/story/primitives";
+import { AssistantScreen } from "@/components/app/assistant-screen";
 
 export function Assistant() {
   return (
@@ -38,29 +18,7 @@ export function Assistant() {
           </FadeIn>
         </div>
 
-        <div className="space-y-4">
-          {cards.map((c, i) => (
-            <motion.article
-              key={i}
-              initial={{ opacity: 0, y: 26 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-12% 0px" }}
-              transition={{ duration: 1.1, delay: i * 0.12, ease: EASE }}
-              className={
-                c.from === "You"
-                  ? "rounded-[22px] border border-border bg-paper p-6 card-lift sm:p-8"
-                  : "rounded-[22px] border border-border bg-primary-soft p-6 card-lift sm:p-8"
-              }
-            >
-              <p className="text-[0.66rem] uppercase tracking-[0.22em] text-muted-foreground">
-                {c.from}
-              </p>
-              <p className="mt-4 font-display text-lg leading-[1.85rem] text-foreground/90 sm:text-xl sm:leading-[2.2rem]">
-                {c.text}
-              </p>
-            </motion.article>
-          ))}
-        </div>
+        <AssistantScreen />
       </div>
     </Chapter>
   );

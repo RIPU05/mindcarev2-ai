@@ -12,6 +12,11 @@ import { Growth } from "@/components/story/growth";
 import { Assistant } from "@/components/story/assistant";
 import { Privacy } from "@/components/story/privacy";
 import { Closing } from "@/components/story/closing";
+import { Chapter } from "@/components/story/primitives";
+import { JournalEditor } from "@/components/app/journal-editor";
+import { ReflectionPanel } from "@/components/app/reflection-panel";
+import { ProfileScreen } from "@/components/app/profile-screen";
+import { SettingsScreen } from "@/components/app/settings-screen";
 
 
 const title = "MindCare — the story of one journal entry";
@@ -45,18 +50,30 @@ function Index() {
         <Opening />
         <Seam from="base" to="paper" />
         <Writing />
+        <Chapter id="editor" label="The editor">
+          <JournalEditor />
+        </Chapter>
         <Seam from="paper" to="base" />
         <Reading />
         <Seam from="base" to="paper" />
         <Emotions />
         <Seam from="paper" to="base" />
         <ReflectionLetter />
+        <Chapter id="reflection-panel" label="The reflection panel">
+          <ReflectionPanel />
+        </Chapter>
         <Seam from="base" to="paper" />
         <Growth />
         <Seam from="paper" to="base" />
         <Assistant />
         <Seam from="base" to="deep" height={180} />
         <Privacy />
+        <Chapter id="settings" label="Your account" tone="paper">
+          <div className="space-y-10">
+            <SettingsScreen />
+            <ProfileScreen />
+          </div>
+        </Chapter>
         <Seam from="deep" to="base" height={180} />
         <Closing />
       </main>

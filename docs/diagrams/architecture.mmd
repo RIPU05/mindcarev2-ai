@@ -1,0 +1,12 @@
+flowchart LR
+  User[User] --> Web[Next.js Frontend]
+  Web --> Api[FastAPI API]
+  Api --> Contracts[Pydantic Schemas]
+  Api --> Orchestration[AI Orchestration Interfaces]
+  Orchestration --> Safety[Safety Screening]
+  Orchestration --> Emotion[Emotion Analysis]
+  Orchestration --> Reflection[Reflection Generation]
+  Api --> Db[(Supabase PostgreSQL)]
+  Api --> Storage[(Media Storage)]
+  Api --> Jobs[Analysis Jobs]
+  Jobs --> Orchestration

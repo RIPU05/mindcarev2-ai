@@ -1,0 +1,11 @@
+erDiagram
+  USERS ||--o{ JOURNALS : owns
+  USERS ||--o{ MOODS : records
+  USERS ||--o{ MEDIA_FILES : uploads
+  USERS ||--o{ AUDIT_LOGS : creates
+  JOURNALS ||--o{ JOURNAL_REVISIONS : versions
+  JOURNALS ||--o{ ANALYSES : analyzed_by
+  MEDIA_FILES ||--o{ ANALYSES : referenced_by
+  ANALYSES ||--o{ ANALYSIS_JOBS : executed_as
+  ANALYSES ||--o{ AI_REFLECTIONS : produces
+  USERS ||--o{ DASHBOARD_CACHE : aggregates

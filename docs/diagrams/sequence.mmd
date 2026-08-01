@@ -1,0 +1,19 @@
+sequenceDiagram
+  participant U as User
+  participant F as Frontend
+  participant A as FastAPI
+  participant S as Safety
+  participant E as Emotion
+  participant R as Reflection
+  participant D as Database
+  U->>F: Submit journal
+  F->>A: POST analysis request
+  A->>D: Store journal and queued analysis
+  A->>S: Screen for safety
+  S-->>A: Risk result
+  A->>E: Analyze emotion
+  E-->>A: Emotion result
+  A->>R: Generate reflection
+  R-->>A: Reflection result
+  A->>D: Persist analysis and reflection
+  A-->>F: Return analysis status/result

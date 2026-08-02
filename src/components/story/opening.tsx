@@ -93,6 +93,7 @@ export function Opening() {
           transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
         />
       </motion.div>
-    </div>
+    </section>
+
   );
 }

@@ -79,9 +79,9 @@ export function Chapter({
   return (
     <section
       id={id}
-      aria-label={label}
+      aria-labelledby={label ? `${id}-label` : undefined}
       className={cn(
-        "relative px-6 py-40 sm:px-10 md:py-56",
+        "relative scroll-mt-24 px-5 py-24 sm:px-10 sm:py-32 md:py-48",
         tone === "paper" && "bg-paper",
         tone === "deep" && "bg-primary-deep text-primary-foreground",
         className,
@@ -89,7 +89,7 @@ export function Chapter({
     >
       <div className="mx-auto w-full max-w-5xl">
         {index || label ? (
-          <FadeIn className="mb-20 flex items-center gap-4">
+          <FadeIn className="mb-12 flex items-center gap-4 sm:mb-16 md:mb-20">
             {index ? (
               <span className="font-display text-sm italic opacity-60">{index}</span>
             ) : null}
@@ -102,9 +102,12 @@ export function Chapter({
               transition={{ duration: 1.2, ease: EASE }}
             />
             {label ? (
-              <span className="text-[0.7rem] font-medium uppercase tracking-[0.22em] opacity-60">
+              <h2
+                id={`${id}-label`}
+                className="text-[0.7rem] font-medium uppercase tracking-[0.22em] opacity-60"
+              >
                 {label}
-              </span>
+              </h2>
             ) : null}
           </FadeIn>
         ) : null}
@@ -113,6 +116,47 @@ export function Chapter({
     </section>
   );
 }
+
+/** Shared chapter headline — one type scale for the whole story. */
+export function ChapterTitle({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <h3
+      className={cn(
+        "font-display text-[1.75rem] leading-[1.16] sm:text-4xl md:text-[2.6rem] md:leading-[1.14]",
+        className,
+      )}
+    >
+      {children}
+    </h3>
+  );
+}
+
+/** Shared standfirst paragraph under a chapter headline. */
+export function Lede({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <p
+      className={cn(
+        "mt-5 max-w-prose text-[0.95rem] leading-[1.8] text-muted-foreground sm:mt-6 sm:text-base sm:leading-relaxed",
+        className,
+      )}
+    >
+      {children}
+    </p>
+  );
+}
+
 
 
 export function FadeIn({

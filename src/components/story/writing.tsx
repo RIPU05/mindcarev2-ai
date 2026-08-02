@@ -1,6 +1,6 @@
 import { motion } from "motion/react";
 
-import { Chapter, EASE, FadeIn } from "@/components/story/primitives";
+import { Chapter, ChapterTitle, EASE, FadeIn } from "@/components/story/primitives";
 
 const paragraphs = [
   "Third late night this week. I told myself it was the deadline, but honestly I think I keep working because the flat is too quiet after nine.",

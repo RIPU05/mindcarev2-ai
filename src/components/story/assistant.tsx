@@ -1,4 +1,4 @@
-import { Chapter, FadeIn } from "@/components/story/primitives";
+import { Chapter, ChapterTitle, FadeIn, Lede } from "@/components/story/primitives";
 import { AssistantScreen } from "@/components/app/assistant-screen";
 
 export function Assistant() {

@@ -1,4 +1,4 @@
-import { Chapter, FadeIn } from "@/components/story/primitives";
+import { Chapter, ChapterTitle, FadeIn, Lede } from "@/components/story/primitives";
 import { MoodTimeline } from "@/components/app/mood-timeline";
 import { WeeklyInsights } from "@/components/app/weekly-insights";
 import { JournalCalendar } from "@/components/app/journal-calendar";

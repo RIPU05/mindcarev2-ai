@@ -1,6 +1,6 @@
 import { motion } from "motion/react";
 
-import { Chapter, EASE, FadeIn } from "@/components/story/primitives";
+import { Chapter, ChapterTitle, EASE, FadeIn } from "@/components/story/primitives";
 
 type Fragment = { text: string; mark?: boolean; note?: string };
 

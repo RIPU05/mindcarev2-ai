@@ -2,7 +2,7 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { Plus } from "lucide-react";
 
-import { Chapter, EASE, FadeIn } from "@/components/story/primitives";
+import { Chapter, ChapterTitle, EASE, FadeIn } from "@/components/story/primitives";
 import { cn } from "@/lib/utils";
 
 const questions = [

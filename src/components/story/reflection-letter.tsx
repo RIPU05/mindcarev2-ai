@@ -1,7 +1,7 @@
 import { motion, useScroll, useTransform } from "motion/react";
 import { useRef } from "react";
 
-import { Chapter, FadeIn, EASE } from "@/components/story/primitives";
+import { Chapter, ChapterTitle, FadeIn, EASE } from "@/components/story/primitives";
 
 const letter = [
   "You noticed something important tonight: the work isn't only about the deadline.",

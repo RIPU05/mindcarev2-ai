@@ -1,6 +1,6 @@
 import { motion } from "motion/react";
 
-import { Chapter, FadeIn, EASE, Parallax } from "@/components/story/primitives";
+import { Chapter, ChapterTitle, FadeIn, EASE, Parallax } from "@/components/story/primitives";
 
 
 const blobs = [

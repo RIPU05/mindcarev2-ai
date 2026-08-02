@@ -137,7 +137,21 @@
   ::selection {
     background-color: var(--color-primary-soft);
   }
+
+  /* One quiet, consistent focus ring across the whole experience. */
+  :focus-visible {
+    outline: 2px solid color-mix(in oklab, var(--color-primary) 65%, transparent);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
 }
+
 
 @utility text-balance-tight {
   text-wrap: balance;

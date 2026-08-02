@@ -44,11 +44,18 @@ function Index() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 1.2, ease: EASE }}
-      className="min-h-screen bg-background"
+      className="min-h-dvh overflow-x-clip bg-background"
     >
+      <a
+        href="#writing"
+        className="sr-only rounded-full bg-primary px-4 py-2 text-primary-foreground focus:not-sr-only focus:absolute focus:left-6 focus:top-6 focus:z-[60]"
+      >
+        Skip to the story
+      </a>
       <StoryChrome />
       <main>
         <Opening />
+
         <Seam from="base" to="paper" />
         <Writing />
         <Chapter id="editor" label="The editor">

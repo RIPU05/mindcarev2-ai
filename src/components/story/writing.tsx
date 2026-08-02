@@ -1,6 +1,6 @@
 import { motion } from "motion/react";
 
-import { Chapter, EASE, FadeIn } from "@/components/story/primitives";
+import { Chapter, ChapterTitle, EASE, FadeIn } from "@/components/story/primitives";
 
 const paragraphs = [
   "Third late night this week. I told myself it was the deadline, but honestly I think I keep working because the flat is too quiet after nine.",
@@ -14,10 +14,10 @@ export function Writing() {
       <div className="grid gap-14 lg:grid-cols-[0.85fr_1.15fr] lg:gap-20">
         <div className="lg:sticky lg:top-32 lg:self-start">
           <FadeIn>
-            <h2 className="font-display text-3xl leading-[1.14] sm:text-[2.6rem]">
+            <ChapterTitle>
               It starts the way every honest thing does —
               <span className="italic text-primary"> slowly.</span>
-            </h2>
+            </ChapterTitle>
             <p className="mt-6 max-w-sm text-base leading-relaxed text-muted-foreground">
               No prompts to perform for. No streak shouting at you. Just a page
               that waits as long as you need it to.

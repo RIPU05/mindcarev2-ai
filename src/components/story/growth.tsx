@@ -1,4 +1,4 @@
-import { Chapter, FadeIn } from "@/components/story/primitives";
+import { Chapter, ChapterTitle, FadeIn, Lede } from "@/components/story/primitives";
 import { MoodTimeline } from "@/components/app/mood-timeline";
 import { WeeklyInsights } from "@/components/app/weekly-insights";
 import { JournalCalendar } from "@/components/app/journal-calendar";
@@ -8,14 +8,14 @@ export function Growth() {
     <Chapter id="growth" index="V" label="Over time" tone="paper">
       <div className="max-w-2xl">
         <FadeIn>
-          <h2 className="font-display text-3xl leading-[1.14] sm:text-[2.6rem]">
+          <ChapterTitle>
             One entry is a night.
             <span className="block italic text-primary">Ninety are a pattern.</span>
-          </h2>
-          <p className="mt-6 text-base leading-relaxed text-muted-foreground">
+          </ChapterTitle>
+          <Lede>
             Nothing to beat, nothing to optimise. Just the shape your months
             actually made.
-          </p>
+          </Lede>
         </FadeIn>
       </div>
 

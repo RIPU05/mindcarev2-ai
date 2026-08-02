@@ -1,0 +1,27 @@
+[run]
+source = app
+omit =
+    app/db/*
+    app/dependencies/*
+    app/main.py
+    app/core/*
+    app/schemas/*
+    app/models/*
+    legacy/*
+    app/api/*
+    app/repositories/*
+    app/auth/client.py
+    app/auth/dependencies.py
+    app/rag/vector_store.py
+    app/rag/context_manager.py
+    app/rag/factory.py
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    if self.debug:
+    if __name__ == .__main__.:
+    raise NotImplementedError
+    raise AbstractMethodError
+    pass

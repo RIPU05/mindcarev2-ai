@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -201,32 +203,43 @@ class SqlCompositeRetriever(CompositeRetriever):
 
     async def retrieve(self, query: SearchQuery) -> list[SearchResult]:
         import logging
+        import time
+        from app.core.telemetry import tracer
+        from app.core.metrics import RAG_RETRIEVAL_DURATION_SECONDS
+
         logger = logging.getLogger(__name__)
 
-        if self.semantic_search is not None:
-            try:
-                logger.info("Attempting semantic vector search via SemanticSearchService...")
-                results = await self.semantic_search.search(query)
-                if results:
-                    logger.info(f"Semantic search returned {len(results)} matches.")
-                    return results
-            except Exception as exc:
-                logger.warning(f"Semantic search failed, falling back to chronological SQL: {exc}")
+        started = time.perf_counter()
+        with tracer.start_as_current_span("rag_retrieve") as span:
+            span.set_attribute("rag.query_text", query.text)
 
-        import asyncio
+            if self.semantic_search is not None:
+                try:
+                    logger.info("Attempting semantic vector search via SemanticSearchService...")
+                    results = await self.semantic_search.search(query)
+                    if results:
+                        logger.info(f"Semantic search returned {len(results)} matches.")
+                        RAG_RETRIEVAL_DURATION_SECONDS.observe(time.perf_counter() - started)
+                        return results
+                except Exception as exc:
+                    logger.warning(f"Semantic search failed, falling back to chronological SQL: {exc}")
 
-        tasks = []
-        for r in self.retrievers:
-            if not query.sources or r.source in query.sources:
-                tasks.append(r.retrieve(query))
+            import asyncio
 
-        if not tasks:
-            return []
+            tasks = []
+            for r in self.retrievers:
+                if not query.sources or r.source in query.sources:
+                    tasks.append(r.retrieve(query))
 
-        retrieved_lists = await asyncio.gather(*tasks)
-        results = []
-        for sublist in retrieved_lists:
-            results.extend(sublist)
+            if not tasks:
+                RAG_RETRIEVAL_DURATION_SECONDS.observe(time.perf_counter() - started)
+                return []
 
-        results.sort(key=lambda x: x.score, reverse=True)
-        return results
+            retrieved_lists = await asyncio.gather(*tasks)
+            results = []
+            for sublist in retrieved_lists:
+                results.extend(sublist)
+
+            results.sort(key=lambda x: x.score, reverse=True)
+            RAG_RETRIEVAL_DURATION_SECONDS.observe(time.perf_counter() - started)
+            return results

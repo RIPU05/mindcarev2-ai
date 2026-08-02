@@ -14,6 +14,17 @@ from app.exceptions import AuthenticationException
 class SupabaseAuthClient:
     def __init__(self, config: SupabaseAuthConfig | None = None) -> None:
         self.config = config or get_supabase_auth_config()
+        self._blacklisted_access_tokens: set[str] = set()
+        self._rotated_refresh_tokens: set[str] = set()
+
+    def invalidate_access_token(self, token: str) -> None:
+        self._blacklisted_access_tokens.add(token)
+
+    def invalidate_refresh_token(self, token: str) -> None:
+        self._rotated_refresh_tokens.add(token)
+
+    def is_refresh_token_invalid(self, token: str) -> bool:
+        return token in self._rotated_refresh_tokens
 
     @cached_property
     def jwk_client(self) -> PyJWKClient | None:
@@ -22,6 +33,8 @@ class SupabaseAuthClient:
         return PyJWKClient(self.config.jwks_url)
 
     async def verify_token(self, token: str) -> dict[str, Any]:
+        if token in self._blacklisted_access_tokens:
+            raise InvalidTokenException("Authentication token has been blacklisted.")
         try:
             unverified_header = jwt.get_unverified_header(token)
             algorithm = unverified_header.get("alg", "HS256")

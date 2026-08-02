@@ -1,0 +1,53 @@
+name: Generate Production Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libpq-dev build-essential
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+          pip install pytest pytest-asyncio pytest-cov httpx psutil prometheus-client opentelemetry-api opentelemetry-sdk opentelemetry-instrumentation-fastapi
+
+      - name: Compile and Run Tests
+        run: |
+          cd backend
+          python -m pytest --cov=app --cov-report=xml --cov-report=term-missing
+
+      - name: Generate Release Artifacts
+        run: |
+          mkdir -p release-assets
+          cp backend/coverage.xml release-assets/coverage.xml
+          cp docs/benchmark_report.md release-assets/benchmark_report.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/v')
+        with:
+          files: |
+            release-assets/coverage.xml
+            release-assets/benchmark_report.md
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,30 +1,105 @@
-# MindCare AI v2 Architecture
+# MindCare AI Architecture Specification
 
-MindCare AI v2 is organized as a modern SaaS monorepo with a Next.js frontend, FastAPI backend, and Supabase PostgreSQL data layer. The current repository contains foundation code only; feature logic, authentication, AI inference, and persistence integrations remain future work.
+This document details the system design, RAG, and instrumentation details for MindCare AI v2.
 
-## System Boundaries
+---
 
-- `frontend/`: Next.js 15 application shell, providers, route groups, API client architecture, and design-system folders.
-- `backend/`: FastAPI service, versioned REST routes, Pydantic schemas, core configuration, and AI service interface boundaries.
-- `legacy/`: preserved Streamlit and local ML project. This directory is archival and must not be modified by v2 architecture work.
-- `docs/`: architecture documentation, ADRs, and Mermaid diagrams.
+## 1. Complete System Flow
 
-## Architectural Principles
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as Client Application
+    participant GW as FastAPI Gateway
+    participant MW as Security Middleware
+    participant SRV as Orchestrator Service
+    participant DB as Postgres + pgvector
+    participant AI as AI Reliable Provider Wrapper
 
-- Dependency inversion: API routes depend on schemas and abstract service contracts, not concrete AI or database providers.
-- Feature-first organization: user-facing domains such as journal, moods, analysis, dashboard, assistant, and profile remain explicit.
-- Independent pipeline stages: safety, emotion analysis, reflection generation, and dashboard aggregation are separately replaceable.
-- Strong contracts: backend schemas and frontend API types define stable boundaries before implementation.
-- Privacy by design: mental health data should be minimized, auditable, encrypted in transit, and scoped by user ownership.
+    User->>GW: POST /journal (Payload + Auth Token)
+    GW->>MW: Verify JWT Token Claims
+    MW-->>GW: Token Validated (Inject user_id)
+    GW->>SRV: Process Journal Entry
+    SRV->>DB: Fetch Similar Entries (RAG Query)
+    DB-->>SRV: Return Historic Matches
+    SRV->>AI: analyze_text() (Safety screening)
+    AI-->>SRV: SafetyResult (Risk Level)
+    SRV->>AI: analyze_text() (Emotion metrics)
+    AI-->>SRV: EmotionResult (Primary Mood)
+    SRV->>AI: generate_reflection() (With context)
+    AI-->>SRV: ReflectionResult (Suggestions)
+    SRV->>DB: Save Journal & Analysis records
+    DB-->>SRV: Commit success
+    SRV-->>GW: Return Journal + Reflection Analysis
+    GW-->>User: 201 Created Response
+```
 
-## Runtime Flow
+---
 
-1. The frontend collects journal, mood, or media input through future feature screens.
-2. The API accepts typed requests and returns typed responses or queued job references.
-3. AI orchestration coordinates independent service stages through abstract interfaces.
-4. Analysis, reflection, dashboard, and audit records are persisted by future repository adapters.
-5. Dashboard reads favor cached aggregates where freshness guarantees allow it.
+## 2. Authentication Flow
 
-## Non-Goals In This Phase
+JWT Authentication utilizes access and refresh tokens.
 
-This phase does not implement authentication, business logic, AI inference, Supabase access, migrations, SQL, or pages. It establishes the architecture required for those future phases.
+```mermaid
+graph TD
+    Login[POST /auth/login] -->|Verify hash| DBCheck{Credentials OK?}
+    DBCheck -->|No| Unauthorized[401 Unauthorized]
+    DBCheck -->|Yes| Issue[Issue JWT Access & Refresh Token]
+    Issue --> CacheRefreshToken[Store Refresh Token in Redis Cache]
+    
+    Request[API Request] -->|With Access Token| AuthMiddleware[Auth Middleware]
+    AuthMiddleware -->|Token Valid| HandleRequest[Execute Endpoint Logic]
+    AuthMiddleware -->|Token Expired| RequestRefresh[POST /auth/refresh with Refresh Token]
+    RequestRefresh --> CheckCache{Refresh Token in Cache?}
+    CheckCache -->|Yes| Rotate[Generate New Access + Rotated Refresh Token]
+    CheckCache -->|No/Revoked| Reject[401 Session Revoked]
+```
+
+---
+
+## 3. RAG Retrieval Pipeline
+
+Our RAG system couples vector matching with chronological fallbacks.
+
+```mermaid
+graph TD
+    Query[Retrieve Historical Context] --> CheckEmbedding{Generate Query Embedding}
+    CheckEmbedding -->|Success| VectorStore[Search pgvector Store]
+    CheckEmbedding -->|Cache Hit| RedisCache[Return Vector from Cache]
+    VectorStore -->|Vector Match Success| ReturnContext[Form Context payload]
+    VectorStore -->|Database Timeout/Failure| ChronoFallback[SqlJournalRetriever Chronological Fallback]
+    ChronoFallback -->|Fetch raw SQL records| ReturnContext
+```
+
+---
+
+## 4. AI Provider Failover (Circuit Breaker)
+
+Ensures zero downtime by routing across available models.
+
+```mermaid
+graph TD
+    Request[Request AI Generation] --> CheckGemini{Circuit Breaker Gemini CLOSED?}
+    CheckGemini -->|Yes| CallGemini[Call Gemini API]
+    CallGemini -->|Succeeds| Success[Return Response]
+    CallGemini -->|Fails 5 times| OpenGemini[Open Gemini Circuit]
+    
+    CheckGemini -->|No / OPEN| CheckOpenAI{Circuit Breaker OpenAI CLOSED?}
+    CheckOpenAI -->|Yes| CallOpenAI[Call OpenAI API]
+    CallOpenAI -->|Succeeds| Success
+    CallOpenAI -->|Fails| OpenOpenAI[Open OpenAI Circuit]
+    
+    CheckOpenAI -->|No / OPEN| CheckGroq{Check Groq / Claude / Local Ollama}
+    CheckGroq --> Success
+```
+
+---
+
+## 5. Telemetry & Monitoring Architecture
+
+System indicators trace requests down to operational infrastructure.
+
+- **FastAPI Middleware**: Automatically tracks HTTP latencies (`http_request_duration_seconds`) and response states (`http_requests_total`).
+- **OpenTelemetry Tracer**: Wraps retrieval database queries (`rag_retrieve`), embedding processes (`generate_and_store_embedding`), and external provider invocations.
+- **Prometheus Scraper**: Polls the `/metrics` endpoint to monitor metrics globally.
+- **Grafana Panel Grid**: Displays system indicators on dashboard layouts.

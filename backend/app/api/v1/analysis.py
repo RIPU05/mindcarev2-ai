@@ -72,6 +72,45 @@ async def analyze_text(
             emotion = await services.emotion.analyze(
                 {"text": payload.text, "analysis_id": str(analysis.id)}
             )
+
+            from app.rag.factory import get_rag_components
+            from app.rag.types import SearchQuery, RetrievalSource
+
+            rag_context_str = ""
+            try:
+                rag = get_rag_components(uow.session)
+                sources = [
+                    RetrievalSource.JOURNAL,
+                    RetrievalSource.REFLECTION,
+                    RetrievalSource.MOOD,
+                ]
+                query = SearchQuery(
+                    text=payload.text,
+                    user_id=current_user.id,
+                    sources=tuple(sources),
+                    limit=3,
+                )
+                if rag.retriever:
+                    retrieved_docs = await rag.retriever.retrieve(query)
+                    if retrieved_docs:
+                        rag_lines = []
+                        for doc in retrieved_docs:
+                            src = doc.document.source
+                            txt = doc.document.text
+                            created = (
+                                doc.document.created_at.strftime("%Y-%m-%d %H:%M")
+                                if doc.document.created_at
+                                else "Unknown Date"
+                            )
+                            rag_lines.append(f"[{src} on {created}]: {txt}")
+                        rag_context_str = "\n".join(rag_lines)
+            except Exception as e:
+                import logging
+
+                logging.getLogger(__name__).warning(
+                    f"RAG context retrieval failed during analysis: {e}"
+                )
+
             reflection = await services.reflection.generate(
                 {
                     "journal_id": str(payload.journal_id) if payload.journal_id else None,
@@ -79,6 +118,7 @@ async def analyze_text(
                     "text": payload.text,
                     "primary_mood": emotion.primary_mood,
                     "risk_level": safety.risk_level,
+                    "rag_context": rag_context_str,
                 }
             )
             completed_at = datetime.now(UTC)

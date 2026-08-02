@@ -213,36 +213,46 @@ async def generate_and_store_embedding(
     from app.rag.factory import get_rag_components
     from app.rag.types import EmbeddingRequest, VectorRecord, RAGDocument
 
+    import time
+    from app.core.telemetry import tracer
+    from app.core.metrics import EMBEDDING_GENERATION_DURATION_SECONDS
+
     try:
-        chunks = chunk_text(text)
-        rag = get_rag_components()
-        if not rag.embedding_provider or not rag.vector_store:
-            logger.info("Embeddings or vector store not configured in get_rag_components")
-            return
+        with tracer.start_as_current_span("generate_and_store_embedding") as span:
+            span.set_attribute("embedding.source", str(source))
+            span.set_attribute("embedding.doc_id", str(document_id))
+            
+            chunks = chunk_text(text)
+            rag = get_rag_components()
+            if not rag.embedding_provider or not rag.vector_store:
+                logger.info("Embeddings or vector store not configured in get_rag_components")
+                return
 
-        records = []
-        for index, chunk in enumerate(chunks):
-            vector = await _global_cache.get(chunk)
-            if not vector:
-                req = EmbeddingRequest(text=chunk)
-                res = await rag.embedding_provider.embed_text(req)
-                vector = res.vector
-                await _global_cache.set(chunk, vector)
+            records = []
+            for index, chunk in enumerate(chunks):
+                vector = await _global_cache.get(chunk)
+                if not vector:
+                    req = EmbeddingRequest(text=chunk)
+                    started = time.perf_counter()
+                    res = await rag.embedding_provider.embed_text(req)
+                    EMBEDDING_GENERATION_DURATION_SECONDS.observe(time.perf_counter() - started)
+                    vector = res.vector
+                    await _global_cache.set(chunk, vector)
 
-            doc = RAGDocument(
-                id=f"{document_id}_{index}",
-                source=source,
-                text=chunk,
-                user_id=user_id,
-                metadata=metadata or {},
-            )
-            records.append(
-                VectorRecord(
+                doc = RAGDocument(
                     id=f"{document_id}_{index}",
-                    vector=vector,
-                    document=doc,
+                    source=source,
+                    text=chunk,
+                    user_id=user_id,
+                    metadata=metadata or {},
                 )
-            )
+                records.append(
+                    VectorRecord(
+                        id=f"{document_id}_{index}",
+                        vector=vector,
+                        document=doc,
+                    )
+                )
 
         await rag.vector_store.upsert(records)
         logger.info(

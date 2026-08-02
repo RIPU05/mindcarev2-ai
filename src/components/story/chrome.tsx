@@ -58,27 +58,50 @@ export function StoryChrome() {
         style={{ scaleX }}
         className="fixed inset-x-0 top-0 z-50 h-[2px] origin-left bg-primary/70"
       />
-      <header className="fixed inset-x-0 top-0 z-40">
-        <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-6 sm:px-10">
-          <span className="flex items-center gap-2.5">
+      <header
+        className={cn(
+          "fixed inset-x-0 top-0 z-40 transition-all duration-700",
+          active
+            ? "border-b border-border/60 bg-background/80 backdrop-blur-md"
+            : "border-b border-transparent",
+        )}
+      >
+        <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-5 py-4 sm:px-10 sm:py-6">
+          <span className="flex min-w-0 items-center gap-2.5">
             <motion.span
               aria-hidden
-              className="block size-2 rounded-full bg-primary"
+              className="block size-2 shrink-0 rounded-full bg-primary"
               animate={{ opacity: [0.55, 1, 0.55] }}
               transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut" }}
             />
             <span className="font-display text-base tracking-tight">
               MindCare
             </span>
+            {/* On small screens the rail is hidden — the header names the chapter instead. */}
+            <AnimatePresence mode="wait">
+              {activeLabel ? (
+                <motion.span
+                  key={activeLabel}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 0.6 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                  className="truncate border-l border-border pl-2.5 text-[0.62rem] uppercase tracking-[0.18em] text-muted-foreground lg:hidden"
+                >
+                  {activeLabel}
+                </motion.span>
+              ) : null}
+            </AnimatePresence>
           </span>
           <a
             href="#begin"
-            className="text-xs uppercase tracking-[0.2em] text-muted-foreground transition-all duration-500 hover:text-foreground hover:tracking-[0.26em]"
+            className="shrink-0 text-xs uppercase tracking-[0.2em] text-muted-foreground transition-all duration-500 hover:text-foreground hover:tracking-[0.26em]"
           >
             Begin
           </a>
         </div>
       </header>
+
 
       {/* Chapter rail — a quiet index of where you are in the story. */}
       <nav

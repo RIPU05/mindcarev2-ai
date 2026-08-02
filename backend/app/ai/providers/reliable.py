@@ -44,6 +44,7 @@ class CircuitBreaker:
     def _update_metrics(self) -> None:
         try:
             from app.core.metrics import CIRCUIT_BREAKER_STATE
+
             CIRCUIT_BREAKER_STATE.labels(provider=self.provider_name, state=self.state).set(1)
             for other in ["CLOSED", "OPEN", "HALF-OPEN"]:
                 if other != self.state:
@@ -132,13 +133,17 @@ class ReliableAIProviderWrapper(AIProvider):
     async def analyze_text(self, text: str, *, system_prompt: str | None = None) -> AIResponse:
         return await self._execute_with_failover("analyze_text", text, system_prompt=system_prompt)
 
-    async def generate_reflection(self, text: str, *, context: dict[str, Any] | None = None) -> AIResponse:
+    async def generate_reflection(
+        self, text: str, *, context: dict[str, Any] | None = None
+    ) -> AIResponse:
         return await self._execute_with_failover("generate_reflection", text, context=context)
 
     async def summarize(self, text: str, *, context: dict[str, Any] | None = None) -> AIResponse:
         return await self._execute_with_failover("summarize", text, context=context)
 
-    async def analyze_audio(self, audio_reference: str, *, context: dict[str, Any] | None = None) -> AIResponse:
+    async def analyze_audio(
+        self, audio_reference: str, *, context: dict[str, Any] | None = None
+    ) -> AIResponse:
         return await self._execute_with_failover("analyze_audio", audio_reference, context=context)
 
     async def health(self) -> ProviderHealthCheck:
@@ -166,19 +171,19 @@ class ReliableAIProviderWrapper(AIProvider):
             priority_list.insert(0, primary)
 
         last_error = None
-        
+
         from app.core.telemetry import tracer
         from app.core.metrics import (
             AI_REQUEST_DURATION_SECONDS,
             AI_TOKEN_USAGE_TOTAL,
             AI_ERRORS_TOTAL,
             AI_FAILOVERS_TOTAL,
-            AI_ESTIMATED_COST_USD
+            AI_ESTIMATED_COST_USD,
         )
 
         with tracer.start_as_current_span(f"ai_provider.{method_name}") as span:
             span.set_attribute("ai.method", method_name)
-            
+
             for provider_idx, provider_name in enumerate(priority_list):
                 if provider_idx > 0:
                     AI_FAILOVERS_TOTAL.inc()
@@ -186,7 +191,9 @@ class ReliableAIProviderWrapper(AIProvider):
 
                 cb = get_circuit_breaker(provider_name)
                 if not cb.can_execute():
-                    logger.warning(f"Circuit breaker for provider '{provider_name}' is OPEN. Skipping.")
+                    logger.warning(
+                        f"Circuit breaker for provider '{provider_name}' is OPEN. Skipping."
+                    )
                     continue
 
                 builder = self.get_provider_builder(provider_name)
@@ -202,10 +209,12 @@ class ReliableAIProviderWrapper(AIProvider):
                         started = time.perf_counter()
                         timeout = getattr(settings, "ai_timeout", 15) or 15
 
-                        with tracer.start_as_current_span(f"ai_provider.{provider_name}.attempt_{attempt}") as attempt_span:
+                        with tracer.start_as_current_span(
+                            f"ai_provider.{provider_name}.attempt_{attempt}"
+                        ) as attempt_span:
                             attempt_span.set_attribute("ai.provider", provider_name)
                             attempt_span.set_attribute("ai.attempt", attempt + 1)
-                            
+
                             response = await asyncio.wait_for(
                                 method(*args, **kwargs), timeout=float(timeout)
                             )
@@ -218,35 +227,32 @@ class ReliableAIProviderWrapper(AIProvider):
 
                         metrics_registry.ai_request_count += 1
                         metrics_registry.total_ai_latency += latency_ms
-                        metrics_registry.total_input_tokens += response.token_usage.input_tokens or 0
-                        metrics_registry.total_output_tokens += response.token_usage.output_tokens or 0
+                        metrics_registry.total_input_tokens += (
+                            response.token_usage.input_tokens or 0
+                        )
+                        metrics_registry.total_output_tokens += (
+                            response.token_usage.output_tokens or 0
+                        )
 
                         cost = compute_estimated_cost(
                             response.provider, response.model, response.token_usage
                         )
-                        
+
                         AI_REQUEST_DURATION_SECONDS.labels(
-                            provider=response.provider,
-                            model=response.model,
-                            stage=method_name
+                            provider=response.provider, model=response.model, stage=method_name
                         ).observe(duration_seconds)
-                        
+
                         AI_TOKEN_USAGE_TOTAL.labels(
-                            provider=response.provider,
-                            model=response.model,
-                            token_type="input"
+                            provider=response.provider, model=response.model, token_type="input"
                         ).inc(response.token_usage.input_tokens or 0)
-                        
+
                         AI_TOKEN_USAGE_TOTAL.labels(
-                            provider=response.provider,
-                            model=response.model,
-                            token_type="output"
+                            provider=response.provider, model=response.model, token_type="output"
                         ).inc(response.token_usage.output_tokens or 0)
-                        
+
                         if cost is not None:
                             AI_ESTIMATED_COST_USD.labels(
-                                provider=response.provider,
-                                model=response.model
+                                provider=response.provider, model=response.model
                             ).inc(cost)
 
                         # Structured logging format for observability
@@ -266,6 +272,7 @@ class ReliableAIProviderWrapper(AIProvider):
 
                         if cost is not None:
                             import dataclasses
+
                             response = dataclasses.replace(response, cost_usd=cost)
 
                         return response
@@ -276,11 +283,9 @@ class ReliableAIProviderWrapper(AIProvider):
                         metrics_registry.ai_failures += 1
                         cb.record_failure()
                         last_error = exc
-                        
+
                         AI_ERRORS_TOTAL.labels(
-                            provider=provider_name,
-                            model="unknown",
-                            error_type="timeout"
+                            provider=provider_name, model="unknown", error_type="timeout"
                         ).inc()
 
                         logger.warning(
@@ -297,9 +302,7 @@ class ReliableAIProviderWrapper(AIProvider):
                         last_error = exc
 
                         AI_ERRORS_TOTAL.labels(
-                            provider=provider_name,
-                            model="unknown",
-                            error_type="exception"
+                            provider=provider_name, model="unknown", error_type="exception"
                         ).inc()
 
                         logger.warning(

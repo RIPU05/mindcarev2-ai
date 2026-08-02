@@ -13,7 +13,9 @@ class AIProvider(ABC):
         """Analyze text and return provider-normalized output."""
 
     @abstractmethod
-    async def generate_reflection(self, text: str, *, context: dict[str, Any] | None = None) -> AIResponse:
+    async def generate_reflection(
+        self, text: str, *, context: dict[str, Any] | None = None
+    ) -> AIResponse:
         """Generate a supportive reflection for journal content."""
 
     @abstractmethod
@@ -21,7 +23,9 @@ class AIProvider(ABC):
         """Summarize content for dashboard or assistant contexts."""
 
     @abstractmethod
-    async def analyze_audio(self, audio_reference: str, *, context: dict[str, Any] | None = None) -> AIResponse:
+    async def analyze_audio(
+        self, audio_reference: str, *, context: dict[str, Any] | None = None
+    ) -> AIResponse:
         """Analyze audio when a concrete provider implementation supports it."""
 
     @abstractmethod

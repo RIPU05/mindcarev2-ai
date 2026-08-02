@@ -129,7 +129,12 @@ class SupabaseAuthClient:
             detail = response.text
             try:
                 payload = response.json()
-                detail = payload.get("msg") or payload.get("message") or payload.get("error_description") or detail
+                detail = (
+                    payload.get("msg")
+                    or payload.get("message")
+                    or payload.get("error_description")
+                    or detail
+                )
             except ValueError:
                 pass
             raise AuthenticationException(str(detail))

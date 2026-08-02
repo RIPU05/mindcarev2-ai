@@ -92,6 +92,7 @@ def create_app() -> FastAPI:
     register_exception_handlers(app)
 
     from app.core.telemetry import instrument_fastapi_app
+
     instrument_fastapi_app(app)
 
     return app
@@ -120,9 +121,7 @@ def register_exception_handlers(app: FastAPI) -> None:
         )
 
     @app.exception_handler(StarletteHTTPException)
-    async def http_exception_handler(
-        request: Request, exc: StarletteHTTPException
-    ) -> JSONResponse:
+    async def http_exception_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:
         logger.warning(
             "http_exception",
             extra={

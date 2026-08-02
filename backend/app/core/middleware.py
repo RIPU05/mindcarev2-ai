@@ -18,8 +18,12 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers.setdefault("x-content-type-options", "nosniff")
         response.headers.setdefault("x-frame-options", "DENY")
         response.headers.setdefault("referrer-policy", "strict-origin-when-cross-origin")
-        response.headers.setdefault("permissions-policy", "camera=(), microphone=(), geolocation=()")
-        response.headers.setdefault("strict-transport-security", "max-age=63072000; includeSubDomains; preload")
+        response.headers.setdefault(
+            "permissions-policy", "camera=(), microphone=(), geolocation=()"
+        )
+        response.headers.setdefault(
+            "strict-transport-security", "max-age=63072000; includeSubDomains; preload"
+        )
         response.headers.setdefault("x-xss-protection", "1; mode=block")
         return response
 
@@ -34,7 +38,11 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
         request_id = request.headers.get("x-request-id", str(uuid.uuid4()))
         request.state.request_id = request_id
 
-        from app.core.metrics import metrics_registry, HTTP_REQUESTS_TOTAL, HTTP_REQUEST_DURATION_SECONDS
+        from app.core.metrics import (
+            metrics_registry,
+            HTTP_REQUESTS_TOTAL,
+            HTTP_REQUEST_DURATION_SECONDS,
+        )
 
         start = time.perf_counter()
         try:
@@ -47,11 +55,15 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
             metrics_registry.request_count += 1
             metrics_registry.failures += 1
             metrics_registry.total_request_latency += duration_ms
-            
+
             # Record Prometheus
-            HTTP_REQUESTS_TOTAL.labels(method=request.method, path=request.url.path, status="500").inc()
-            HTTP_REQUEST_DURATION_SECONDS.labels(method=request.method, path=request.url.path).observe(duration_seconds)
-            
+            HTTP_REQUESTS_TOTAL.labels(
+                method=request.method, path=request.url.path, status="500"
+            ).inc()
+            HTTP_REQUEST_DURATION_SECONDS.labels(
+                method=request.method, path=request.url.path
+            ).observe(duration_seconds)
+
             # Get user ID if present
             claims = getattr(request.state, "auth_claims", None) or {}
             user_id = claims.get("sub")
@@ -79,8 +91,12 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
             metrics_registry.failures += 1
 
         # Record Prometheus
-        HTTP_REQUESTS_TOTAL.labels(method=request.method, path=request.url.path, status=str(response.status_code)).inc()
-        HTTP_REQUEST_DURATION_SECONDS.labels(method=request.method, path=request.url.path).observe(duration_seconds)
+        HTTP_REQUESTS_TOTAL.labels(
+            method=request.method, path=request.url.path, status=str(response.status_code)
+        ).inc()
+        HTTP_REQUEST_DURATION_SECONDS.labels(method=request.method, path=request.url.path).observe(
+            duration_seconds
+        )
 
         # Get user ID if present
         claims = getattr(request.state, "auth_claims", None) or {}

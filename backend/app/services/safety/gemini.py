@@ -22,11 +22,18 @@ class GeminiSafetyScreeningService(SafetyScreeningService):
             )
 
             async def _call_and_validate() -> SafetyResult:
-                response = await self.provider.analyze_text(payload.get("text", ""), system_prompt=prompt)
+                response = await self.provider.analyze_text(
+                    payload.get("text", ""), system_prompt=prompt
+                )
                 data = parse_json_object(response.content)
 
                 risk_val = data.get("risk_level")
-                if not isinstance(risk_val, str) or risk_val not in {"unknown", "low", "moderate", "high"}:
+                if not isinstance(risk_val, str) or risk_val not in {
+                    "unknown",
+                    "low",
+                    "moderate",
+                    "high",
+                }:
                     raise ValueError(f"Invalid or missing risk_level: {risk_val}")
 
                 categories_val = data.get("categories")

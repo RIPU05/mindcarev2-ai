@@ -181,6 +181,7 @@ class OllamaEmbeddingProvider(EmbeddingProvider):
         results = []
         async with httpx.AsyncClient(timeout=10.0) as client:
             for req in requests:
+
                 async def _call():
                     res = await client.post(
                         f"{base_url}/api/embeddings",
@@ -221,7 +222,7 @@ async def generate_and_store_embedding(
         with tracer.start_as_current_span("generate_and_store_embedding") as span:
             span.set_attribute("embedding.source", str(source))
             span.set_attribute("embedding.doc_id", str(document_id))
-            
+
             chunks = chunk_text(text)
             rag = get_rag_components()
             if not rag.embedding_provider or not rag.vector_store:

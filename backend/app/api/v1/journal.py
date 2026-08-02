@@ -166,7 +166,9 @@ async def delete_journal_entry(
     return None
 
 
-@router.post("/{id}/restore", response_model=JournalResponse, status_code=200, responses=ERROR_RESPONSES)
+@router.post(
+    "/{id}/restore", response_model=JournalResponse, status_code=200, responses=ERROR_RESPONSES
+)
 async def restore_journal_entry(
     id: UUID,
     current_user: User = Depends(get_current_user),

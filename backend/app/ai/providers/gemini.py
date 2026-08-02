@@ -2,7 +2,13 @@ import time
 from typing import Any
 
 from app.ai.exceptions import AIProviderError, RateLimitError, TimeoutError
-from app.ai.prompts import HEALTH_PROMPT, TEXT_ANALYSIS_PROMPT, journal_prompt, reflection_prompt, summary_prompt
+from app.ai.prompts import (
+    HEALTH_PROMPT,
+    TEXT_ANALYSIS_PROMPT,
+    journal_prompt,
+    reflection_prompt,
+    summary_prompt,
+)
 from app.ai.providers.http import JsonHttpAIClient
 from app.ai.providers.base import AIProvider
 from app.ai.types import AIResponse, ProviderHealthCheck, RetryPolicy, TokenUsage
@@ -27,13 +33,17 @@ class GeminiProvider(AIProvider):
     async def analyze_text(self, text: str, *, system_prompt: str | None = None) -> AIResponse:
         return await self._generate(journal_prompt(system_prompt or TEXT_ANALYSIS_PROMPT, text))
 
-    async def generate_reflection(self, text: str, *, context: dict[str, Any] | None = None) -> AIResponse:
+    async def generate_reflection(
+        self, text: str, *, context: dict[str, Any] | None = None
+    ) -> AIResponse:
         return await self._generate(reflection_prompt(text, context))
 
     async def summarize(self, text: str, *, context: dict[str, Any] | None = None) -> AIResponse:
         return await self._generate(summary_prompt(text, context))
 
-    async def analyze_audio(self, audio_reference: str, *, context: dict[str, Any] | None = None) -> AIResponse:
+    async def analyze_audio(
+        self, audio_reference: str, *, context: dict[str, Any] | None = None
+    ) -> AIResponse:
         raise AIProviderError(
             "Gemini audio analysis is not enabled yet.",
             details={"audio_reference": audio_reference, "context": context or {}},
@@ -44,7 +54,9 @@ class GeminiProvider(AIProvider):
         try:
             await self._generate(HEALTH_PROMPT)
             latency_ms = int((time.perf_counter() - started) * 1000)
-            return ProviderHealthCheck(provider=self.name, model=self.model, healthy=True, latency_ms=latency_ms)
+            return ProviderHealthCheck(
+                provider=self.name, model=self.model, healthy=True, latency_ms=latency_ms
+            )
         except Exception as exc:
             latency_ms = int((time.perf_counter() - started) * 1000)
             return ProviderHealthCheck(

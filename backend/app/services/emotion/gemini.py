@@ -20,7 +20,9 @@ class GeminiEmotionAnalysisService(EmotionAnalysisService):
             )
 
             async def _call_and_validate() -> EmotionResult:
-                response = await self.provider.analyze_text(payload.get("text", ""), system_prompt=prompt)
+                response = await self.provider.analyze_text(
+                    payload.get("text", ""), system_prompt=prompt
+                )
                 data = parse_json_object(response.content)
 
                 primary_mood_val = data.get("primary_mood")
@@ -42,7 +44,9 @@ class GeminiEmotionAnalysisService(EmotionAnalysisService):
                     label = item.get("label")
                     score = item.get("score")
                     if not isinstance(label, str) or not isinstance(score, (int, float)):
-                        raise ValueError("each emotion dict must have string 'label' and number 'score'")
+                        raise ValueError(
+                            "each emotion dict must have string 'label' and number 'score'"
+                        )
                     emotions.append(EmotionSignal(label=label, score=float(score)))
 
                 if not emotions:

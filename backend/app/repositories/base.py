@@ -60,7 +60,9 @@ class Repository(Generic[ModelT]):
             raise translate_database_error(exc) from exc
 
     async def count(self, *, include_deleted: bool = False) -> int:
-        statement = select(func.count()).select_from(self._base_select(include_deleted=include_deleted).subquery())
+        statement = select(func.count()).select_from(
+            self._base_select(include_deleted=include_deleted).subquery()
+        )
         try:
             return int(await self.session.scalar(statement) or 0)
         except SQLAlchemyError as exc:

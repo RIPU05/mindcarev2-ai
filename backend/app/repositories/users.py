@@ -25,7 +25,9 @@ class ProfileRepository(Repository[Profile]):
     async def get_by_user_id(self, user_id) -> Profile | None:
         try:
             result = await self.session.scalars(
-                select(Profile).where(Profile.user_id == user_id, Profile.deleted_at.is_(None)).limit(1)
+                select(Profile)
+                .where(Profile.user_id == user_id, Profile.deleted_at.is_(None))
+                .limit(1)
             )
             return result.first()
         except SQLAlchemyError as exc:
@@ -35,14 +37,14 @@ class ProfileRepository(Repository[Profile]):
 class UserSettingsRepository(Repository[UserSettings]):
     model = UserSettings
 
-    async def get_by_user_id(self, user_id, *, include_deleted: bool = False) -> UserSettings | None:
+    async def get_by_user_id(
+        self, user_id, *, include_deleted: bool = False
+    ) -> UserSettings | None:
         try:
             statement = select(UserSettings).where(UserSettings.user_id == user_id)
             if not include_deleted:
                 statement = statement.where(UserSettings.deleted_at.is_(None))
-            result = await self.session.scalars(
-                statement.limit(1)
-            )
+            result = await self.session.scalars(statement.limit(1))
             return result.first()
         except SQLAlchemyError as exc:
             raise translate_database_error(exc) from exc

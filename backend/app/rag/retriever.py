@@ -177,9 +177,7 @@ class SqlConversationRetriever(ConversationRetriever):
         pagination = PaginationParams(
             limit=limit, offset=0, sort_by="created_at", sort_direction="desc"
         )
-        messages = await repo.list_for_conversation(
-            UUID(conversation_id), pagination=pagination
-        )
+        messages = await repo.list_for_conversation(UUID(conversation_id), pagination=pagination)
         results = []
         for i, msg in enumerate(messages):
             role_prefix = "User" if msg.role == "user" else "Assistant"
@@ -197,7 +195,9 @@ class SqlConversationRetriever(ConversationRetriever):
 
 
 class SqlCompositeRetriever(CompositeRetriever):
-    def __init__(self, retrievers: list[Retriever], semantic_search: "SemanticSearchService" | None = None) -> None:
+    def __init__(
+        self, retrievers: list[Retriever], semantic_search: "SemanticSearchService" | None = None
+    ) -> None:
         self.retrievers = retrievers
         self.semantic_search = semantic_search
 
@@ -222,7 +222,9 @@ class SqlCompositeRetriever(CompositeRetriever):
                         RAG_RETRIEVAL_DURATION_SECONDS.observe(time.perf_counter() - started)
                         return results
                 except Exception as exc:
-                    logger.warning(f"Semantic search failed, falling back to chronological SQL: {exc}")
+                    logger.warning(
+                        f"Semantic search failed, falling back to chronological SQL: {exc}"
+                    )
 
             import asyncio
 

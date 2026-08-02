@@ -23,6 +23,7 @@ async def health_check() -> HealthResponse:
     # 1. DB Diagnostics
     try:
         from app.db.database import verify_database_connection
+
         await verify_database_connection()
         db_status = "healthy"
     except Exception as exc:
@@ -38,6 +39,7 @@ async def health_check() -> HealthResponse:
     # 3. RAG/Vector Store Diagnostics
     try:
         from app.rag.factory import get_rag_components
+
         rag = get_rag_components()
         rag_status = "healthy" if rag.vector_store else "unconfigured"
     except Exception as exc:
@@ -54,6 +56,7 @@ async def health_check() -> HealthResponse:
     # 5. Embedding Provider
     try:
         from app.rag.factory import get_rag_components
+
         rag = get_rag_components()
         emb_status = "healthy" if rag.embedding_provider else "unconfigured"
     except Exception as exc:
@@ -76,8 +79,8 @@ async def health_check() -> HealthResponse:
             "memory_usage": mem_status,
             "uptime": f"{round(uptime_seconds, 2)}s",
             "active_provider": settings.default_ai_provider,
-            "queue_status": "idle"
-        }
+            "queue_status": "idle",
+        },
     )
 
 
@@ -90,6 +93,7 @@ async def live_check() -> dict:
 async def ready_check(response: Response) -> dict:
     try:
         from app.db.database import verify_database_connection
+
         await verify_database_connection()
         db_ok = True
     except Exception:

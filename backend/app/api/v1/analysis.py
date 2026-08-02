@@ -32,7 +32,9 @@ ERROR_RESPONSES = {
 }
 
 
-@router.post("/text", response_model=MoodAnalysisResponse, status_code=200, responses=ERROR_RESPONSES)
+@router.post(
+    "/text", response_model=MoodAnalysisResponse, status_code=200, responses=ERROR_RESPONSES
+)
 async def analyze_text(
     payload: TextAnalysisRequest,
     current_user: User = Depends(get_current_user),
@@ -176,7 +178,9 @@ async def analyze_text(
         return analysis_response(analysis)
 
 
-@router.post("/audio", response_model=MoodAnalysisResponse, status_code=202, responses=ERROR_RESPONSES)
+@router.post(
+    "/audio", response_model=MoodAnalysisResponse, status_code=202, responses=ERROR_RESPONSES
+)
 async def analyze_audio(
     payload: AudioAnalysisRequest,
     current_user: User = Depends(get_current_user),
@@ -233,15 +237,17 @@ def analysis_response(analysis: MoodAnalysis) -> MoodAnalysisResponse:
         confidence=analysis.confidence or 0.0,
         risk_level=analysis.risk_level,
         emotions=emotions,
-        ai_metadata={
-            "provider": metadata.get("provider"),
-            "provider_model": metadata.get("model"),
-            "provider_latency_ms": metadata.get("latency_ms"),
-            "provider_cost": metadata.get("cost_usd"),
-            "provider_request_id": metadata.get("request_id"),
-        }
-        if metadata.get("provider")
-        else None,
+        ai_metadata=(
+            {
+                "provider": metadata.get("provider"),
+                "provider_model": metadata.get("model"),
+                "provider_latency_ms": metadata.get("latency_ms"),
+                "provider_cost": metadata.get("cost_usd"),
+                "provider_request_id": metadata.get("request_id"),
+            }
+            if metadata.get("provider")
+            else None
+        ),
         queued_at=analysis.created_at,
         started_at=metadata.get("processing_started_at"),
         completed_at=metadata.get("processing_completed_at"),

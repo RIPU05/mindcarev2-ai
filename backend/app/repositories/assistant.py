@@ -20,7 +20,9 @@ class AssistantConversationRepository(Repository[AssistantConversation]):
         include_deleted: bool = False,
         status: ConversationStatus | None = None,
     ) -> Select[tuple[AssistantConversation]]:
-        statement = self._base_select(include_deleted=include_deleted).where(AssistantConversation.user_id == user_id)
+        statement = self._base_select(include_deleted=include_deleted).where(
+            AssistantConversation.user_id == user_id
+        )
         if status is not None:
             statement = statement.where(AssistantConversation.status == status)
         return statement
@@ -32,9 +34,11 @@ class AssistantConversationRepository(Repository[AssistantConversation]):
         *,
         include_deleted: bool = False,
     ) -> AssistantConversation | None:
-        statement = self.scoped_select(user_id, include_deleted=include_deleted).where(
-            AssistantConversation.id == conversation_id
-        ).limit(1)
+        statement = (
+            self.scoped_select(user_id, include_deleted=include_deleted)
+            .where(AssistantConversation.id == conversation_id)
+            .limit(1)
+        )
         try:
             return (await self.session.scalars(statement)).first()
         except SQLAlchemyError as exc:

@@ -13,7 +13,9 @@ from app.schemas.common import ErrorResponse
 from app.schemas.enums import AssistantRole
 from app.services.ai_json import parse_json_object
 
-router = APIRouter(prefix="/assistant", tags=["assistant"], dependencies=[Depends(get_current_user)])
+router = APIRouter(
+    prefix="/assistant", tags=["assistant"], dependencies=[Depends(get_current_user)]
+)
 
 ERROR_RESPONSES = {
     400: {"model": ErrorResponse},
@@ -35,7 +37,9 @@ async def chat(
 ) -> AssistantChatResponse:
     async with UnitOfWork() as uow:
         if payload.journal_id is not None:
-            journal = await JournalRepository(uow.session).get_for_user(current_user.id, payload.journal_id)
+            journal = await JournalRepository(uow.session).get_for_user(
+                current_user.id, payload.journal_id
+            )
             if journal is None:
                 raise NotFoundException("Referenced journal entry was not found.")
 
@@ -52,7 +56,9 @@ async def chat(
             )
             await uow.session.flush()
         else:
-            conversation = await conversations.get_for_user(current_user.id, payload.conversation_id)
+            conversation = await conversations.get_for_user(
+                current_user.id, payload.conversation_id
+            )
             if conversation is None:
                 raise NotFoundException("Assistant conversation was not found.")
 
@@ -61,7 +67,9 @@ async def chat(
                 conversation_id=conversation.id,
                 role=AssistantRole.USER,
                 content=payload.message,
-                message_metadata={"journal_id": str(payload.journal_id) if payload.journal_id else None},
+                message_metadata={
+                    "journal_id": str(payload.journal_id) if payload.journal_id else None
+                },
             )
         )
         import time
@@ -114,7 +122,9 @@ async def chat(
 
         try:
             parsed_data = parse_json_object(response.content)
-            content = str(parsed_data.get("reflection") or parsed_data.get("summary") or response.content)
+            content = str(
+                parsed_data.get("reflection") or parsed_data.get("summary") or response.content
+            )
         except Exception:
             content = response.content
 

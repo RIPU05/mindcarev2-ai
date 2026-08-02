@@ -42,7 +42,12 @@ class AuthTokenResponse(ApiSchema):
 
     @classmethod
     def mock(cls) -> "AuthTokenResponse":
-        return cls(access_token="mock_access_token", refresh_token="mock_refresh_token", expires_in=3600, user=UserSummary.mock())
+        return cls(
+            access_token="mock_access_token",
+            refresh_token="mock_refresh_token",
+            expires_in=3600,
+            user=UserSummary.mock(),
+        )
 
 
 class RefreshSessionRequest(ApiSchema):

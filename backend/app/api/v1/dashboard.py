@@ -10,7 +10,9 @@ from app.schemas.dashboard import DashboardSummaryResponse
 from app.schemas.enums import RiskLevel
 from app.utils.pagination import PaginationParams
 
-router = APIRouter(prefix="/dashboard", tags=["dashboard"], dependencies=[Depends(get_current_user)])
+router = APIRouter(
+    prefix="/dashboard", tags=["dashboard"], dependencies=[Depends(get_current_user)]
+)
 
 ERROR_RESPONSES = {
     401: {"model": ErrorResponse},
@@ -32,7 +34,9 @@ async def get_dashboard_summary(
         moods = MoodAnalysisRepository(uow.session)
         latest = await moods.list_for_user(
             current_user.id,
-            pagination=PaginationParams(limit=1, offset=0, sort_by="created_at", sort_direction="desc"),
+            pagination=PaginationParams(
+                limit=1, offset=0, sort_by="created_at", sort_direction="desc"
+            ),
         )
         latest_mood = latest[0] if latest else None
         return DashboardSummaryResponse(

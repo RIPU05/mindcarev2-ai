@@ -10,7 +10,6 @@ from app.ai.providers.openai import OpenAIProvider
 from app.ai.registry import get_provider_builder, register_provider
 from app.core.config import settings
 
-
 register_provider("gemini", lambda: GeminiProvider())
 register_provider("openai", lambda: OpenAIProvider())
 register_provider("claude", lambda: AnthropicProvider())

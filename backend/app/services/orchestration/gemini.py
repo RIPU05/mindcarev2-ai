@@ -19,10 +19,16 @@ class GeminiAIPipelineOrchestrator(AIPipelineOrchestrator):
     async def run(self, payload: PipelineInput) -> PipelineResult:
         completed = [PipelineStage.JOURNAL]
         safety = await self.safety.screen(
-            {"text": payload.get("text", ""), "journal_id": payload.get("journal_id"), "user_id": payload.get("user_id")}
+            {
+                "text": payload.get("text", ""),
+                "journal_id": payload.get("journal_id"),
+                "user_id": payload.get("user_id"),
+            }
         )
         completed.append(PipelineStage.SAFETY_SCREENING)
-        emotion = await self.emotion.analyze({"text": payload.get("text", ""), "analysis_id": payload.get("analysis_id")})
+        emotion = await self.emotion.analyze(
+            {"text": payload.get("text", ""), "analysis_id": payload.get("analysis_id")}
+        )
         completed.append(PipelineStage.EMOTION_ANALYSIS)
         completed.append(PipelineStage.MOOD_ANALYSIS)
         await self.reflection.generate(

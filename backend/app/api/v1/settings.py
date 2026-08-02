@@ -54,7 +54,9 @@ async def delete_settings(current_user: User = Depends(get_current_user)) -> Non
     return None
 
 
-@router.post("/restore", response_model=UserSettingsResponse, status_code=200, responses=ERROR_RESPONSES)
+@router.post(
+    "/restore", response_model=UserSettingsResponse, status_code=200, responses=ERROR_RESPONSES
+)
 async def restore_settings(current_user: User = Depends(get_current_user)) -> UserSettingsResponse:
     async with UnitOfWork() as uow:
         repository = UserSettingsRepository(uow.session)

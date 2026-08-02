@@ -32,22 +32,49 @@ ERROR_RESPONSES = {
 }
 
 
-@router.post("/login", response_model=AuthTokenResponse, status_code=200, responses=ERROR_RESPONSES, dependencies=[Depends(auth_rate_limiter)])
-async def login(payload: LoginRequest, session: AsyncSession = Depends(get_database_session)) -> AuthTokenResponse:
+@router.post(
+    "/login",
+    response_model=AuthTokenResponse,
+    status_code=200,
+    responses=ERROR_RESPONSES,
+    dependencies=[Depends(auth_rate_limiter)],
+)
+async def login(
+    payload: LoginRequest, session: AsyncSession = Depends(get_database_session)
+) -> AuthTokenResponse:
     supabase_response = await auth_client.sign_in_with_password(payload.email, payload.password)
     return await build_auth_response(supabase_response, session)
 
 
-@router.post("/register", response_model=AuthTokenResponse, status_code=201, responses=ERROR_RESPONSES, dependencies=[Depends(auth_rate_limiter)])
-async def register(payload: RegisterRequest, session: AsyncSession = Depends(get_database_session)) -> AuthTokenResponse:
-    supabase_response = await auth_client.sign_up(payload.email, payload.password, payload.display_name)
+@router.post(
+    "/register",
+    response_model=AuthTokenResponse,
+    status_code=201,
+    responses=ERROR_RESPONSES,
+    dependencies=[Depends(auth_rate_limiter)],
+)
+async def register(
+    payload: RegisterRequest, session: AsyncSession = Depends(get_database_session)
+) -> AuthTokenResponse:
+    supabase_response = await auth_client.sign_up(
+        payload.email, payload.password, payload.display_name
+    )
     return await build_auth_response(supabase_response, session)
 
 
-@router.post("/refresh", response_model=AuthTokenResponse, status_code=200, responses=ERROR_RESPONSES, dependencies=[Depends(auth_rate_limiter)])
-async def refresh(payload: RefreshSessionRequest, session: AsyncSession = Depends(get_database_session)) -> AuthTokenResponse:
+@router.post(
+    "/refresh",
+    response_model=AuthTokenResponse,
+    status_code=200,
+    responses=ERROR_RESPONSES,
+    dependencies=[Depends(auth_rate_limiter)],
+)
+async def refresh(
+    payload: RefreshSessionRequest, session: AsyncSession = Depends(get_database_session)
+) -> AuthTokenResponse:
     if auth_client.is_refresh_token_invalid(payload.refresh_token):
         from app.exceptions import InvalidTokenException
+
         raise InvalidTokenException("Refresh token has already been used.")
     supabase_response = await auth_client.refresh_session(payload.refresh_token)
     auth_client.invalidate_refresh_token(payload.refresh_token)
@@ -91,7 +118,9 @@ async def me(
         user=UserSummary(
             id=current_user.id,
             email=current_user.email,
-            display_name=(profile.display_name if profile and profile.display_name else "MindCare User"),
+            display_name=(
+                profile.display_name if profile and profile.display_name else "MindCare User"
+            ),
             created_at=current_user.created_at,
         )
     )
@@ -105,7 +134,13 @@ async def build_auth_response(payload: dict[str, Any], session: AsyncSession) ->
     user = await sync_authenticated_user(claims, session)
     profile = await ProfileRepository(session).get_by_user_id(user.id)
     metadata = claims.get("user_metadata") if isinstance(claims.get("user_metadata"), dict) else {}
-    display_name = (profile.display_name if profile and profile.display_name else None) or metadata.get("display_name") or metadata.get("full_name") or metadata.get("name") or "MindCare User"
+    display_name = (
+        (profile.display_name if profile and profile.display_name else None)
+        or metadata.get("display_name")
+        or metadata.get("full_name")
+        or metadata.get("name")
+        or "MindCare User"
+    )
     return AuthTokenResponse(
         access_token=access_token,
         refresh_token=payload.get("refresh_token"),

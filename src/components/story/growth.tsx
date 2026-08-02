@@ -12,10 +12,10 @@ export function Growth() {
             One entry is a night.
             <span className="block italic text-primary">Ninety are a pattern.</span>
           </ChapterTitle>
-          <p className="mt-6 text-base leading-relaxed text-muted-foreground">
+          <Lede>
             Nothing to beat, nothing to optimise. Just the shape your months
             actually made.
-          </p>
+          </Lede>
         </FadeIn>
       </div>
 

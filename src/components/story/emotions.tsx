@@ -1,6 +1,6 @@
 import { motion } from "motion/react";
 
-import { Chapter, ChapterTitle, FadeIn, EASE, Parallax } from "@/components/story/primitives";
+import { Chapter, ChapterTitle, FadeIn, Lede, EASE, Parallax } from "@/components/story/primitives";
 
 
 const blobs = [
@@ -22,10 +22,10 @@ export function Emotions() {
               Words become
               <span className="italic text-accent"> colour.</span>
             </ChapterTitle>
-            <p className="mt-6 max-w-sm text-base leading-relaxed text-muted-foreground">
+            <Lede className="max-w-sm">
               Not a score out of ten. A soft field of everything that moved
               through the evening, sized by how loudly it appeared.
-            </p>
+            </Lede>
           </FadeIn>
 
           <ul className="mt-10 space-y-4">

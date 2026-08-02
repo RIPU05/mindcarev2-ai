@@ -11,10 +11,10 @@ export function Assistant() {
               It talks like someone
               <span className="italic text-primary"> who remembers.</span>
             </ChapterTitle>
-            <p className="mt-6 max-w-sm text-base leading-relaxed text-muted-foreground">
+            <Lede className="max-w-sm">
               No bubbles, no typing dots, no personality act. Just a slow
               exchange you can leave and return to.
-            </p>
+            </Lede>
           </FadeIn>
         </div>
 

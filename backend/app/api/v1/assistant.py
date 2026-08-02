@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends
 
-from app.ai import get_ai_provider
 from app.auth.dependencies import get_current_user
 from app.db.uow import UnitOfWork
 from app.exceptions import NotFoundException
@@ -17,7 +16,7 @@ router = APIRouter(
     prefix="/assistant", tags=["assistant"], dependencies=[Depends(get_current_user)]
 )
 
-ERROR_RESPONSES = {
+ERROR_RESPONSES: dict[int | str, dict] = {
     400: {"model": ErrorResponse},
     401: {"model": ErrorResponse},
     422: {"model": ErrorResponse},
@@ -46,6 +45,7 @@ async def chat(
         conversations = AssistantConversationRepository(uow.session)
         messages = AssistantMessageRepository(uow.session)
 
+        conversation: AssistantConversation | None = None
         if payload.conversation_id is None:
             conversation = await conversations.add(
                 AssistantConversation(
@@ -98,7 +98,7 @@ async def chat(
         if rag.retriever:
             retrieved_docs = await rag.retriever.retrieve(query)
 
-        memories = []
+        memories: list = []
         context_window = None
         if rag.context_builder:
             context_window = await rag.context_builder.build(
@@ -179,17 +179,32 @@ async def chat(
                 metadata={"role": "assistant", "conversation_id": str(conversation.id)},
             )
         )
+        from decimal import Decimal
+
+        from app.schemas.ai import AIProviderMetadata
+        from app.schemas.enums import AIProvider as SchemaAIProvider
+
+        enum_provider = None
+        try:
+            enum_provider = SchemaAIProvider(response.provider)
+        except Exception:
+            pass
+
+        ai_meta = AIProviderMetadata(
+            provider=enum_provider,
+            provider_model=response.model,
+            provider_latency_ms=response.latency_ms,
+            provider_cost=(
+                Decimal(str(response.cost_usd)) if response.cost_usd is not None else None
+            ),
+            provider_request_id=response.request_id,
+        )
+
         return AssistantChatResponse(
             conversation_id=conversation.id,
             message_id=assistant_message.id,
             role=assistant_message.role,
             content=assistant_message.content,
-            ai_metadata={
-                "provider": response.provider,
-                "provider_model": response.model,
-                "provider_latency_ms": response.latency_ms,
-                "provider_cost": str(response.cost_usd) if response.cost_usd is not None else None,
-                "provider_request_id": response.request_id,
-            },
+            ai_metadata=ai_meta,
             created_at=assistant_message.created_at,
         )

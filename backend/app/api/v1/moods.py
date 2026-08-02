@@ -15,7 +15,7 @@ from app.utils.pagination import PaginationParams
 
 router = APIRouter(prefix="/moods", tags=["moods"], dependencies=[Depends(get_current_user)])
 
-ERROR_RESPONSES = {
+ERROR_RESPONSES: dict[int | str, dict] = {
     401: {"model": ErrorResponse},
     404: {"model": ErrorResponse},
     422: {"model": ErrorResponse},

@@ -22,19 +22,19 @@ class GeminiAIPipelineOrchestrator(AIPipelineOrchestrator):
             {
                 "text": payload.get("text", ""),
                 "journal_id": payload.get("journal_id"),
-                "user_id": payload.get("user_id"),
+                "user_id": payload.get("user_id") or "",
             }
         )
         completed.append(PipelineStage.SAFETY_SCREENING)
         emotion = await self.emotion.analyze(
-            {"text": payload.get("text", ""), "analysis_id": payload.get("analysis_id")}
+            {"text": payload.get("text", ""), "analysis_id": payload.get("analysis_id") or ""}
         )
         completed.append(PipelineStage.EMOTION_ANALYSIS)
         completed.append(PipelineStage.MOOD_ANALYSIS)
         await self.reflection.generate(
             {
                 "journal_id": payload.get("journal_id"),
-                "analysis_id": payload.get("analysis_id"),
+                "analysis_id": payload.get("analysis_id") or "",
                 "text": payload.get("text", ""),
                 "primary_mood": emotion.primary_mood,
                 "risk_level": safety.risk_level,

@@ -4,11 +4,12 @@ from pydantic import BaseModel, Field
 
 
 class ReflectionInput(TypedDict, total=False):
-    journal_id: str
+    journal_id: str | None
     analysis_id: str
     text: str
     primary_mood: str
     risk_level: str
+    rag_context: str | None
 
 
 class ReflectionResult(BaseModel):

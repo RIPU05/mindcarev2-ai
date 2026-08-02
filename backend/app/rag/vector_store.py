@@ -1,7 +1,13 @@
+from __future__ import annotations
+
 import math
 from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
 
 from app.rag.types import SearchQuery, SearchResult, VectorRecord
+
+if TYPE_CHECKING:
+    from app.rag.embeddings import EmbeddingProvider
 
 
 class VectorStore(ABC):
@@ -46,7 +52,7 @@ _in_memory_records: dict[str, VectorRecord] = {}
 def cosine_similarity(v1: list[float], v2: list[float]) -> float:
     if not v1 or not v2 or len(v1) != len(v2):
         return 0.0
-    dot = sum(a * b for a, b in zip(v1, v2))
+    dot = sum(a * b for a, b in zip(v1, v2, strict=False))
     norm_a = math.sqrt(sum(a * a for a in v1))
     norm_b = math.sqrt(sum(b * b for b in v2))
     if norm_a == 0.0 or norm_b == 0.0:

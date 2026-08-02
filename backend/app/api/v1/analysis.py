@@ -22,7 +22,7 @@ from app.services.factory import get_ai_services
 
 router = APIRouter(prefix="/analysis", tags=["analysis"], dependencies=[Depends(get_current_user)])
 
-ERROR_RESPONSES = {
+ERROR_RESPONSES: dict[int | str, dict] = {
     400: {"model": ErrorResponse},
     401: {"model": ErrorResponse},
     413: {"model": ErrorResponse},
@@ -223,6 +223,11 @@ async def validate_journal_reference(
 
 
 def analysis_response(analysis: MoodAnalysis) -> MoodAnalysisResponse:
+    from decimal import Decimal
+
+    from app.schemas.ai import AIProviderMetadata
+    from app.schemas.enums import AIProvider as SchemaAIProvider
+
     scores = analysis.emotion_scores or {}
     emotions = [
         EmotionScore(label=str(label), score=float(score))
@@ -230,6 +235,7 @@ def analysis_response(analysis: MoodAnalysis) -> MoodAnalysisResponse:
         if isinstance(score, (int, float))
     ]
     metadata = analysis.provider_metadata or {}
+    provider_name = metadata.get("provider")
     return MoodAnalysisResponse(
         id=analysis.id,
         input_type=analysis.input_type,
@@ -239,14 +245,23 @@ def analysis_response(analysis: MoodAnalysis) -> MoodAnalysisResponse:
         risk_level=analysis.risk_level,
         emotions=emotions,
         ai_metadata=(
-            {
-                "provider": metadata.get("provider"),
-                "provider_model": metadata.get("model"),
-                "provider_latency_ms": metadata.get("latency_ms"),
-                "provider_cost": metadata.get("cost_usd"),
-                "provider_request_id": metadata.get("request_id"),
-            }
-            if metadata.get("provider")
+            AIProviderMetadata(
+                provider=(
+                    SchemaAIProvider(provider_name)
+                    if isinstance(provider_name, str)
+                    and provider_name in [e.value for e in SchemaAIProvider]
+                    else None
+                ),
+                provider_model=metadata.get("model"),
+                provider_latency_ms=metadata.get("latency_ms"),
+                provider_cost=(
+                    Decimal(str(metadata.get("cost_usd")))
+                    if metadata.get("cost_usd") is not None
+                    else None
+                ),
+                provider_request_id=metadata.get("request_id"),
+            )
+            if provider_name
             else None
         ),
         queued_at=analysis.created_at,

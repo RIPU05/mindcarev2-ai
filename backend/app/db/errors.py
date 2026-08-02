@@ -1,9 +1,14 @@
 from sqlalchemy.exc import IntegrityError, NoResultFound, SQLAlchemyError
 
-from app.exceptions import ConflictException, DatabaseException, NotFoundException
+from app.exceptions import (
+    ConflictException,
+    DatabaseException,
+    MindCareException,
+    NotFoundException,
+)
 
 
-def translate_database_error(error: SQLAlchemyError) -> DatabaseException:
+def translate_database_error(error: SQLAlchemyError) -> MindCareException:
     if isinstance(error, IntegrityError):
         return ConflictException("Database constraint conflict.", details={"source": "database"})
     if isinstance(error, NoResultFound):

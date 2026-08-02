@@ -117,10 +117,10 @@ def mock_ai_provider():
         )
     )
 
-    with patch("app.ai.get_ai_provider", return_value=mock_prov), patch(
-        "app.services.factory.get_ai_provider", return_value=mock_prov
-    ), patch("app.api.v1.health.get_ai_provider", return_value=mock_prov), patch(
-        "app.api.v1.assistant.get_ai_provider", return_value=mock_prov
+    with patch("app.ai.get_ai_provider", return_value=mock_prov, create=True), patch(
+        "app.services.factory.get_ai_provider", return_value=mock_prov, create=True
+    ), patch("app.api.v1.health.get_ai_provider", return_value=mock_prov, create=True), patch(
+        "app.api.v1.assistant.get_ai_provider", return_value=mock_prov, create=True
     ):
         yield mock_prov
 

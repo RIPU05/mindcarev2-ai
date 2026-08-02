@@ -9,7 +9,7 @@ from app.schemas.profile import ProfileResponse, ProfileUpdateRequest
 
 router = APIRouter(prefix="/profile", tags=["profile"], dependencies=[Depends(get_current_user)])
 
-ERROR_RESPONSES = {
+ERROR_RESPONSES: dict[int | str, dict] = {
     400: {"model": ErrorResponse},
     401: {"model": ErrorResponse},
     422: {"model": ErrorResponse},

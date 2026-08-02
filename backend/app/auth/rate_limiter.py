@@ -8,7 +8,7 @@ class AuthRateLimiter:
     def __init__(self, requests_limit: int = 5, window_seconds: int = 60) -> None:
         self.requests_limit = requests_limit
         self.window_seconds = window_seconds
-        self.history = defaultdict(list)
+        self.history: dict[str, list[float]] = defaultdict(list)
 
     async def __call__(self, request: Request) -> None:
         ip = request.client.host if request.client else "unknown"

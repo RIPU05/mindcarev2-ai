@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     app_version: str = Field(default="2.0.0", alias="APP_VERSION")
     debug: bool = Field(default=False, alias="DEBUG")
     api_prefix: str = Field(default="/api/v1", alias="API_PREFIX")
-    api_host: str = Field(default="0.0.0.0", alias="API_HOST")
+    api_host: str = Field(default="0.0.0.0", alias="API_HOST")  # nosec B104
     api_port: int = Field(default=8000, alias="API_PORT")
     backend_cors_origins: list[str] = Field(
         default=["http://localhost:3000"],

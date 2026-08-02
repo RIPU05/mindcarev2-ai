@@ -23,7 +23,7 @@ from app.schemas.common import ErrorResponse
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-ERROR_RESPONSES = {
+ERROR_RESPONSES: dict[int | str, dict] = {
     400: {"model": ErrorResponse},
     401: {"model": ErrorResponse},
     409: {"model": ErrorResponse},
@@ -131,9 +131,12 @@ async def build_auth_response(payload: dict[str, Any], session: AsyncSession) ->
     if not isinstance(access_token, str):
         raise ValueError("Supabase did not return an access token.")
     claims = await auth_client.verify_token(access_token)
+    if not claims:
+        raise ValueError("Invalid auth claims.")
     user = await sync_authenticated_user(claims, session)
     profile = await ProfileRepository(session).get_by_user_id(user.id)
-    metadata = claims.get("user_metadata") if isinstance(claims.get("user_metadata"), dict) else {}
+    user_metadata = claims.get("user_metadata")
+    metadata = user_metadata if isinstance(user_metadata, dict) else {}
     display_name = (
         (profile.display_name if profile and profile.display_name else None)
         or metadata.get("display_name")

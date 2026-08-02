@@ -14,7 +14,7 @@ router = APIRouter(
     prefix="/dashboard", tags=["dashboard"], dependencies=[Depends(get_current_user)]
 )
 
-ERROR_RESPONSES = {
+ERROR_RESPONSES: dict[int | str, dict] = {
     401: {"model": ErrorResponse},
     500: {"model": ErrorResponse},
 }

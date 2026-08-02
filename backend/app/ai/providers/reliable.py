@@ -118,17 +118,11 @@ def compute_estimated_cost(provider: str, model: str, usage: TokenUsage | None) 
 class ReliableAIProviderWrapper(AIProvider):
     def __init__(self, primary_provider_name: str | None = None) -> None:
         self.primary_provider_name = primary_provider_name
+        self.name: str = primary_provider_name or "reliable_wrapper"
+        self.model: str = "reliable_model"
         from app.ai.registry import get_provider_builder
 
         self.get_provider_builder = get_provider_builder
-
-    @property
-    def name(self) -> str:
-        return self.primary_provider_name or "reliable_wrapper"
-
-    @property
-    def model(self) -> str:
-        return "reliable_model"
 
     async def analyze_text(self, text: str, *, system_prompt: str | None = None) -> AIResponse:
         return await self._execute_with_failover("analyze_text", text, system_prompt=system_prompt)
@@ -170,7 +164,7 @@ class ReliableAIProviderWrapper(AIProvider):
                 priority_list.remove(primary)
             priority_list.insert(0, primary)
 
-        last_error = None
+        last_error: Exception | None = None
 
         from app.core.metrics import (
             AI_ERRORS_TOTAL,

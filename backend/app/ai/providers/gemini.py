@@ -1,7 +1,7 @@
 import time
 from typing import Any
 
-from app.ai.exceptions import AIProviderError, RateLimitError, TimeoutError
+from app.ai.exceptions import AIProviderError
 from app.ai.prompts import (
     HEALTH_PROMPT,
     TEXT_ANALYSIS_PROMPT,

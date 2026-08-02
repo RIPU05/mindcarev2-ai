@@ -42,4 +42,6 @@ async def retry_on_json_error(
                 logger.error(
                     f"AI response parsing or validation failed after {max_retries + 1} attempts."
                 )
-    raise last_error
+    if last_error is not None:
+        raise last_error
+    raise ValueError("Execution failed after retries.")

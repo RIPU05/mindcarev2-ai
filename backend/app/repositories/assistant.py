@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import Select, select
+from sqlalchemy import Select
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.db.errors import translate_database_error

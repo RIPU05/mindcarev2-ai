@@ -71,7 +71,9 @@ async def retry_async(func, max_retries: int = 3, initial_delay: float = 0.5):
                 f"Embedding call failed on attempt {attempt + 1}. Retrying... Error: {exc}"
             )
             await asyncio.sleep(initial_delay * (2**attempt))
-    raise last_exc
+    if last_exc is not None:
+        raise last_exc
+    raise RuntimeError("Execution failed after retries.")
 
 
 class GeminiEmbeddingProvider(EmbeddingProvider):
@@ -106,7 +108,7 @@ class GeminiEmbeddingProvider(EmbeddingProvider):
         embeddings = data.get("embeddings") or []
 
         results = []
-        for i, embed in enumerate(embeddings):
+        for embed in embeddings:
             vector = [float(x) for x in embed.get("values", [])]
             results.append(
                 EmbeddingResult(
@@ -183,10 +185,10 @@ class OllamaEmbeddingProvider(EmbeddingProvider):
         async with httpx.AsyncClient(timeout=10.0) as client:
             for req in requests:
 
-                async def _call():
+                async def _call(r=req):
                     res = await client.post(
                         f"{base_url}/api/embeddings",
-                        json={"model": self.model, "prompt": req.text},
+                        json={"model": self.model, "prompt": r.text},
                     )
                     res.raise_for_status()
                     return res.json()

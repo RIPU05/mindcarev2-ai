@@ -1,11 +1,15 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.rag.types import RAGDocument, RetrievalSource, SearchQuery, SearchResult
+
+if TYPE_CHECKING:
+    from app.rag.vector_store import SemanticSearchService
 
 
 class Retriever(ABC):

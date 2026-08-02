@@ -16,7 +16,7 @@ class SafetyCategory(StrEnum):
 
 class SafetyInput(TypedDict, total=False):
     text: str
-    journal_id: str
+    journal_id: str | None
     user_id: str
 
 

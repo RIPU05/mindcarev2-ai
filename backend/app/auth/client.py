@@ -61,7 +61,10 @@ class SupabaseAuthClient:
             raise InvalidTokenException("Authentication token is invalid.") from exc
 
     async def _get_signing_key(self, token: str) -> Any:
-        return await to_thread.run_sync(lambda: self.jwk_client.get_signing_key_from_jwt(token).key)
+        client = self.jwk_client
+        if client is None:
+            raise InvalidTokenException("JWK client is not initialized.")
+        return await to_thread.run_sync(lambda: client.get_signing_key_from_jwt(token).key)
 
     async def sign_in_with_password(self, email: str, password: str) -> dict[str, Any]:
         return await self._auth_request(

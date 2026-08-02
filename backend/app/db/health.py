@@ -16,9 +16,22 @@ async def check_database_health() -> DatabaseHealth:
     try:
         async with engine.connect() as connection:
             await connection.execute(text("SELECT 1"))
-        return DatabaseHealth(ok=True, **get_pool_health())
+        pool_data = get_pool_health()
+        return DatabaseHealth(
+            ok=True,
+            pool_size=pool_data.get("pool_size"),
+            checked_out=pool_data.get("checked_out"),
+            overflow=pool_data.get("overflow"),
+        )
     except Exception as exc:
-        return DatabaseHealth(ok=False, message=str(exc), **get_pool_health())
+        pool_data = get_pool_health()
+        return DatabaseHealth(
+            ok=False,
+            message=str(exc),
+            pool_size=pool_data.get("pool_size"),
+            checked_out=pool_data.get("checked_out"),
+            overflow=pool_data.get("overflow"),
+        )
 
 
 def get_pool_health() -> dict[str, int | None]:

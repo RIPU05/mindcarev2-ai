@@ -31,10 +31,11 @@ export function Seam({
       aria-hidden
       className="pointer-events-none -my-px w-full"
       style={{
-        height,
+        height: `clamp(72px, 11vw, ${height}px)`,
         background: `linear-gradient(to bottom, ${toneBg[from]}, ${toneBg[to]})`,
       }}
     />
+
   );
 }
 

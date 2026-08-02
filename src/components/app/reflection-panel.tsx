@@ -72,7 +72,7 @@ export function ReflectionPanel() {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 1, delay: 0.3 + i * 0.25, ease: EASE }}
-              className="rounded-2xl border border-border/70 bg-surface-warm p-4"
+              className="card-lift rounded-2xl border border-border/70 bg-surface-warm p-4"
             >
               <p className="font-display text-[0.95rem] leading-relaxed text-foreground/85">
                 <span className="bg-primary-soft px-1 py-0.5">“{h.phrase}”</span>

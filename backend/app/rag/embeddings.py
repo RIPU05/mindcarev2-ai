@@ -258,12 +258,19 @@ async def generate_and_store_embedding(
                     )
                 )
 
-        await rag.vector_store.upsert(records)
-        logger.info(
-            f"Stored {len(records)} chunks of embedding for source={source}, "
-            f"doc_id={document_id}, user_id={user_id}"
-        )
+            await rag.vector_store.upsert(records)
+            logger.info(
+                f"Stored {len(records)} chunks of embedding for source={source}, "
+                f"doc_id={document_id}, user_id={user_id}"
+            )
     except Exception as exc:
+        from opentelemetry import trace
+        from opentelemetry.trace import StatusCode
+
+        current_span = trace.get_current_span()
+        if current_span and current_span.is_recording():
+            current_span.record_exception(exc)
+            current_span.set_status(StatusCode.ERROR, str(exc))
         logger.error(
             f"Failed to generate and store embedding: {exc}",
             exc_info=True,

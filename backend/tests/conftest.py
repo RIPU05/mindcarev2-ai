@@ -51,7 +51,12 @@ def anyio_backend() -> str:
 
 @pytest.fixture(scope="session")
 async def test_engine(anyio_backend: str):
-    engine = create_async_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+    from sqlalchemy.pool import NullPool
+    engine = create_async_engine(
+        DATABASE_URL,
+        connect_args={"check_same_thread": False},
+        poolclass=NullPool,
+    )
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     yield engine
@@ -146,6 +151,27 @@ def mock_rag_components(mock_ai_provider):
 
     with patch("app.rag.factory.get_rag_components", return_value=mock_bundle):
         yield mock_bundle
+
+
+@pytest.fixture(autouse=True)
+def mock_create_task_integration(request):
+    import asyncio
+    from unittest.mock import patch, MagicMock
+
+    if "test_unit" in request.module.__name__:
+        yield
+        return
+
+    def safe_create_task(coro, *args, **kwargs):
+        if hasattr(coro, "close"):
+            coro.close()
+        loop = asyncio.get_event_loop()
+        fut = loop.create_future()
+        fut.set_result(None)
+        return fut
+
+    with patch("asyncio.create_task", side_effect=safe_create_task):
+        yield
 
 
 @pytest.fixture

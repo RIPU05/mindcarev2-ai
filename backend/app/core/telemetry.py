@@ -1,5 +1,6 @@
 import logging
 import os
+import sys
 
 from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
@@ -7,14 +8,21 @@ from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExport
 
 logger = logging.getLogger(__name__)
 
-# 1. Initialize TracerProvider
+
+# 1. TracerProvider init
 provider = TracerProvider()
 
 # 2. Check for OTLP endpoint
 otlp_endpoint = os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT") or os.getenv(
     "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT"
 )
-if otlp_endpoint:
+
+if "pytest" in sys.modules or os.getenv("APP_ENV") == "testing":
+    from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+    from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
+
+    provider.add_span_processor(SimpleSpanProcessor(InMemorySpanExporter()))
+elif otlp_endpoint:
     try:
         # Prefer gRPC or HTTP OTLP Exporter
         from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter

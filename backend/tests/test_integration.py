@@ -49,21 +49,20 @@ async def test_journal_endpoints_success(client: AsyncClient):
         "tags": ["anxiety", "exam"],
         "source": "manual"
     }
-    with patch("asyncio.create_task"):
-        response = await client.post("/api/v1/journal", json=payload)
-        assert response.status_code == 201
-        data = response.json()
-        assert "id" in data
-        assert data["content"] == payload["content"]
-        assert data["title"] == payload["title"]
+    response = await client.post("/api/v1/journal", json=payload)
+    assert response.status_code == 201
+    data = response.json()
+    assert "id" in data
+    assert data["content"] == payload["content"]
+    assert data["title"] == payload["title"]
 
-        # Test GET /api/v1/journal (List journals)
-        get_response = await client.get("/api/v1/journal?limit=10")
-        assert get_response.status_code == 200
-        get_data = get_response.json()
-        assert "items" in get_data
-        assert isinstance(get_data["items"], list)
-        assert len(get_data["items"]) >= 1
+    # Test GET /api/v1/journal (List journals)
+    get_response = await client.get("/api/v1/journal?limit=10")
+    assert get_response.status_code == 200
+    get_data = get_response.json()
+    assert "items" in get_data
+    assert isinstance(get_data["items"], list)
+    assert len(get_data["items"]) >= 1
 
 
 @pytest.mark.anyio
@@ -81,11 +80,10 @@ async def test_journal_creation_invalid_payload(client: AsyncClient):
 @pytest.mark.anyio
 async def test_mood_analysis_success(client: AsyncClient):
     payload = {"text": "I feel very anxious about tomorrow's exam."}
-    with patch("asyncio.create_task"):
-        response = await client.post("/api/v1/analysis/text", json=payload)
-        assert response.status_code in [200, 202]
-        data = response.json()
-        assert "status" in data
+    response = await client.post("/api/v1/analysis/text", json=payload)
+    assert response.status_code in [200, 202]
+    data = response.json()
+    assert "status" in data
 
 
 @pytest.mark.anyio

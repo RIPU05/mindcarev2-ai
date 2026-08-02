@@ -309,4 +309,6 @@ class ReliableAIProviderWrapper(AIProvider):
                     f"Provider '{provider_name}' failed all retries. Failing over to next registered provider."
                 )
 
-            raise AIProviderError(f"All AI providers failed. Last error: {last_error}")
+            raise AIProviderError(
+                f"All AI providers failed. Last error: {last_error}"
+            ) from last_error

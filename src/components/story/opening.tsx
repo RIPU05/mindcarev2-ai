@@ -19,16 +19,17 @@ export function Opening() {
   const typed = useTypewriter(line, 46, inView);
 
   return (
-    <div
+    <section
       ref={ref}
-      className="relative flex min-h-[100svh] flex-col justify-center px-6 pb-24 pt-28 sm:px-10"
+      aria-label="Tonight's entry"
+      className="relative flex min-h-dvh flex-col justify-center px-5 pb-28 pt-28 sm:px-10 sm:pb-32"
     >
       <motion.div style={{ y, opacity }} className="mx-auto w-full max-w-3xl">
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 1.4, ease: EASE }}
-          className="text-[0.7rem] font-medium uppercase tracking-[0.24em] text-muted-foreground"
+          className="text-[0.68rem] font-medium uppercase tracking-[0.24em] text-muted-foreground"
         >
           Thursday · 9:42 pm
         </motion.p>
@@ -37,7 +38,7 @@ export function Opening() {
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1.4, delay: 0.15, ease: EASE }}
-          className="mt-6 font-display text-4xl leading-[1.08] sm:text-6xl"
+          className="mt-5 font-display text-[2.35rem] leading-[1.06] text-balance-tight sm:mt-6 sm:text-5xl md:text-6xl"
         >
           Good evening.
           <span className="block italic text-primary">How are you feeling today?</span>
@@ -48,32 +49,33 @@ export function Opening() {
           initial={{ opacity: 0, y: 30, rotateX: 6 }}
           animate={{ opacity: 1, y: 0, rotateX: 0 }}
           transition={{ duration: 1.6, delay: 0.4, ease: EASE }}
-          className="mt-12 rounded-[26px] border border-border bg-paper p-7 shadow-panel sm:p-10"
+          className="mt-10 rounded-[24px] border border-border bg-paper p-6 shadow-panel sm:mt-12 sm:rounded-[26px] sm:p-10"
         >
-          <div className="flex items-center justify-between border-b border-border/70 pb-4">
-            <span className="text-[0.68rem] uppercase tracking-[0.2em] text-muted-foreground">
+          <div className="flex items-center justify-between gap-4 border-b border-border/70 pb-4">
+            <span className="truncate text-[0.66rem] uppercase tracking-[0.2em] text-muted-foreground">
               Entry no. 148
             </span>
-            <span className="text-[0.68rem] tracking-wide text-muted-foreground">
+            <span className="shrink-0 text-[0.66rem] tracking-wide text-muted-foreground">
               Private
             </span>
           </div>
 
-          <p className="mt-7 min-h-[6.5rem] font-display text-xl leading-[2.1rem] text-foreground/90 sm:min-h-[7rem] sm:text-2xl sm:leading-[2.6rem]">
+          <p className="mt-6 min-h-[7.5rem] font-display text-lg leading-[1.9] text-foreground/90 sm:mt-7 sm:min-h-[7rem] sm:text-2xl sm:leading-[2.6rem]">
             {typed}
             <Caret />
           </p>
 
-          <div className="mt-8 flex flex-wrap items-center gap-3 border-t border-border/70 pt-6">
+          <div className="mt-7 flex flex-wrap items-center gap-x-4 gap-y-3 border-t border-border/70 pt-6 sm:mt-8">
             <Button variant="solid" size="pill" asChild>
               <a href="#begin">Begin writing</a>
             </Button>
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs leading-relaxed text-muted-foreground">
               Nothing you write here leaves your account.
             </span>
           </div>
         </motion.div>
       </motion.div>
+
 
       <motion.div
         initial={{ opacity: 0 }}

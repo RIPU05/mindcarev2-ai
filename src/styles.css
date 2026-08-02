@@ -168,11 +168,28 @@
     border-color 600ms cubic-bezier(0.16, 1, 0.3, 1);
 
   &:hover {
-    transform: translateY(-4px);
+    transform: translateY(-4px) scale(1.006);
     box-shadow: var(--shadow-lift);
     border-color: color-mix(in oklab, var(--color-primary) 22%, var(--color-border));
   }
 }
+
+/* Quiet emphasis for small interactive chips and rows. */
+@utility soft-press {
+  transition:
+    transform 450ms cubic-bezier(0.16, 1, 0.3, 1),
+    background-color 450ms cubic-bezier(0.16, 1, 0.3, 1),
+    color 450ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  &:hover {
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0) scale(0.985);
+  }
+}
+
 
 @media (prefers-reduced-motion: reduce) {
   *,

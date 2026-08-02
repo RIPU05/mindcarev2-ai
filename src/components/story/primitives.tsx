@@ -104,7 +104,7 @@ export function Chapter({
             {label ? (
               <h2
                 id={`${id}-label`}
-                className="text-[0.7rem] font-medium uppercase tracking-[0.22em] opacity-60"
+                className="font-sans text-[0.7rem] font-medium uppercase tracking-[0.22em] opacity-60"
               >
                 {label}
               </h2>

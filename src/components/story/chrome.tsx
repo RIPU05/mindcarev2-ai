@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { motion, useScroll, useSpring } from "motion/react";
+import { AnimatePresence, motion, useScroll, useSpring } from "motion/react";
 
 import { cn } from "@/lib/utils";
 
@@ -50,6 +50,7 @@ export function StoryChrome() {
     restDelta: 0.001,
   });
   const active = useActiveChapter();
+  const activeLabel = chapters.find((c) => c.id === active)?.label ?? null;
 
   return (
     <>

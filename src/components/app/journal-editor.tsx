@@ -69,20 +69,20 @@ export function JournalEditor({ typing = true }: { typing?: boolean }) {
                     key={b}
                     type="button"
                     initial={{ opacity: 0, scale: 0.7 }}
-                    whileInView={{ opacity: 1, scale: 1 }}
+                    whileInView={{ opacity: b === "steady" ? 1 : 0.55, scale: 1 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.7, delay: 0.3 + i * 0.08, ease: EASE }}
                     aria-label={moodMeta[b].label}
                     aria-pressed={b === "steady"}
-                    className="group grid size-8 place-items-center rounded-full border transition-transform duration-500 hover:scale-110"
+                    className="group grid size-9 place-items-center rounded-full border transition-transform duration-500 hover:scale-110 sm:size-8"
                     style={{
                       background: moodMeta[b].token,
                       borderColor:
                         b === "steady" ? "var(--color-foreground)" : "transparent",
-                      opacity: b === "steady" ? 1 : 0.55,
                     }}
                   />
                 ))}
+
               </div>
               <p className="mt-2 text-[0.72rem] text-muted-foreground">
                 Steady — a shade better than yesterday.

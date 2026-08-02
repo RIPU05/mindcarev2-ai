@@ -2,8 +2,8 @@ from dataclasses import dataclass
 
 from app.ai import get_ai_provider
 from app.ai.providers.base import AIProvider
-from app.services.emotion.interface import EmotionAnalysisService
 from app.services.emotion.gemini import GeminiEmotionAnalysisService
+from app.services.emotion.interface import EmotionAnalysisService
 from app.services.orchestration.gemini import GeminiAIPipelineOrchestrator
 from app.services.orchestration.interface import AIPipelineOrchestrator
 from app.services.reflection.gemini import GeminiReflectionGenerationService

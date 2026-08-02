@@ -8,8 +8,10 @@ from app.db.errors import translate_database_error
 
 
 class UnitOfWork:
+    session: AsyncSession
+
     def __init__(self, session: AsyncSession | None = None) -> None:
-        self.session = session
+        self.session = session  # type: ignore
         self._owns_session = session is None
 
     async def __aenter__(self) -> "UnitOfWork":

@@ -58,7 +58,8 @@ async def sync_authenticated_user(claims: dict[str, Any], session: AsyncSession)
     email = claims.get("email")
     if not isinstance(email, str) or not email:
         raise InvalidTokenException("Authentication token does not include an email claim.")
-    metadata = claims.get("user_metadata") if isinstance(claims.get("user_metadata"), dict) else {}
+    user_metadata = claims.get("user_metadata")
+    metadata = user_metadata if isinstance(user_metadata, dict) else {}
     display_name = metadata.get("display_name") or metadata.get("full_name") or metadata.get("name")
 
     users = UserRepository(session)

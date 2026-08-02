@@ -8,14 +8,12 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
-from pydub import AudioSegment
 import requests
-from sklearn.pipeline import Pipeline
-
 import streamlit as st
-
 from ai_mh_detection.config import AppConfig, default_config_path
 from ai_mh_detection.preprocessing import TextPreprocessor
+from pydub import AudioSegment
+from sklearn.pipeline import Pipeline
 
 try:
     # `audio/` lives at repo root, so it should be importable when running from the project folder.
@@ -43,17 +41,27 @@ def _load_pickle(path: Path) -> Any:
 
 # ── Condition → display name mapping ──────────────────────────────────────────
 CONDITION_DISPLAY: dict[str, str] = {
-    "normal":               "No Major Concern",
-    "depression":           "Depression",
-    "suicidal":             "Suicidal Ideation",
-    "anxiety":              "Anxiety",
-    "bipolar":              "Bipolar-related Signs",
-    "stress":               "Stress",
+    "normal": "No Major Concern",
+    "depression": "Depression",
+    "suicidal": "Suicidal Ideation",
+    "anxiety": "Anxiety",
+    "bipolar": "Bipolar-related Signs",
+    "stress": "Stress",
     "personality disorder": "Personality-related Distress",
 }
 
 # Conditions that map to a "concern" (used for chatbot/history compatibility)
-CONCERN_CONDITIONS: frozenset[str] = frozenset({"depression", "anxiety", "anger", "stress", "suicidal", "bipolar", "personality disorder"})
+CONCERN_CONDITIONS: frozenset[str] = frozenset(
+    {
+        "depression",
+        "anxiety",
+        "anger",
+        "stress",
+        "suicidal",
+        "bipolar",
+        "personality disorder",
+    }
+)
 
 
 def _condition_from_pred(raw: object) -> str:
@@ -79,7 +87,7 @@ def _get_recommendation(*, condition: str, emotion_label: str) -> str:
     if cond == "depression":
         return (
             "**Depression detected — here is a 3-step support plan (10-20 min):**\n"
-            "1. Reach out: message or call one trusted person — even just \"I'm having a rough day.\"\n"
+            '1. Reach out: message or call one trusted person — even just "I\'m having a rough day."\n'
             "2. Body reset: drink water, take a 5-minute walk or gentle stretch.\n"
             "3. Write 3 lines: what I feel / what I need / one tiny next step.\n\n"
             "If you feel unsafe or at risk of self-harm, please contact emergency or crisis support now."
@@ -161,10 +169,9 @@ def _get_recommendation(*, condition: str, emotion_label: str) -> str:
     return (
         "**Things look steady — maintain your wellbeing:**\n"
         "1. Keep a basic routine: consistent sleep, meals, and movement.\n"
-        "2. Do one low-effort check-in: \"How am I feeling in my body right now?\"\n"
+        '2. Do one low-effort check-in: "How am I feeling in my body right now?"\n'
         "3. If things shift downward, reach out early — support works best proactively."
     )
-
 
 
 def _normalize_emotion_label(emotion_pred: Any, *, processed_text: str | None = None) -> str:
@@ -188,7 +195,14 @@ def _normalize_emotion_label(emotion_pred: Any, *, processed_text: str | None = 
         if val == 0:
             if processed_text:
                 t = processed_text.lower()
-                anxious_markers = {"anxious", "anxiety", "panic", "worried", "nervous", "overwhelmed"}
+                anxious_markers = {
+                    "anxious",
+                    "anxiety",
+                    "panic",
+                    "worried",
+                    "nervous",
+                    "overwhelmed",
+                }
                 if any(m in t for m in anxious_markers):
                     return "anxious"
             return "negative"
@@ -229,9 +243,7 @@ def _local_rule_based_response(
         history = chat_history or []
 
         # Collect recent assistant replies to avoid repeating the same phrasing.
-        recent_bot_msgs = [
-            m["content"] for m in history[-6:] if m.get("role") == "assistant"
-        ]
+        recent_bot_msgs = [m["content"] for m in history[-6:] if m.get("role") == "assistant"]
 
         # Infer conversation state — condition string takes priority over binary pred.
         cond = condition.strip().lower()
@@ -249,145 +261,220 @@ def _local_rule_based_response(
             state = "negative"
         elif pred == 1:
             state = "depression"  # legacy binary fallback
-        elif "anxious" in emo or "panic" in emo or any(
-            k in text_norm for k in ("anxious", "anxiety", "panic", "worried", "nervous", "dread")
+        elif (
+            "anxious" in emo
+            or "panic" in emo
+            or any(
+                k in text_norm
+                for k in ("anxious", "anxiety", "panic", "worried", "nervous", "dread")
+            )
         ):
             state = "anxious"
         elif "stress" in emo or any(
-            k in text_norm for k in ("stressed", "overwhelmed", "deadline", "pressure", "burnout", "exhausted")
+            k in text_norm
+            for k in (
+                "stressed",
+                "overwhelmed",
+                "deadline",
+                "pressure",
+                "burnout",
+                "exhausted",
+            )
         ):
             state = "stress"
-        elif "positive" in emo or any(k in emo for k in ("happy", "joy", "relieved", "excited", "grateful")):
+        elif "positive" in emo or any(
+            k in emo for k in ("happy", "joy", "relieved", "excited", "grateful")
+        ):
             state = "positive"
-        elif "negative" in emo or any(k in emo for k in ("sad", "depressed", "hopeless", "empty", "numb")):
+        elif "negative" in emo or any(
+            k in emo for k in ("sad", "depressed", "hopeless", "empty", "numb")
+        ):
             state = "negative"
         else:
             state = "neutral"
 
         # Topic triggers for specific action/follow-up selection.
-        trigger_sleep = any(k in text_norm for k in ("sleep", "insomnia", "awake", "tired", "rest", "fatigue"))
-        trigger_exam = any(k in text_norm for k in ("exam", "test", "study", "assignment", "grade", "college"))
-        trigger_family = any(k in text_norm for k in ("family", "parents", "mother", "father", "home", "sibling"))
-        trigger_lonely = any(k in text_norm for k in ("lonely", "loneliness", "alone", "isolated", "no one"))
-        trigger_overthinking = any(k in text_norm for k in ("overthinking", "overthink", "spiral", "racing thoughts"))
-        trigger_future = any(k in text_norm for k in ("future", "career", "what if", "uncertain", "tomorrow", "path"))
-        trigger_work = any(k in text_norm for k in ("work", "job", "deadline", "boss", "office", "project"))
-        trigger_relationship = any(k in text_norm for k in ("friend", "partner", "relationship", "argument", "breakup"))
-        trigger_body = any(k in text_norm for k in ("body", "chest", "breathing", "heart", "headache", "stomach"))
+        trigger_sleep = any(
+            k in text_norm for k in ("sleep", "insomnia", "awake", "tired", "rest", "fatigue")
+        )
+        trigger_exam = any(
+            k in text_norm for k in ("exam", "test", "study", "assignment", "grade", "college")
+        )
+        trigger_family = any(
+            k in text_norm for k in ("family", "parents", "mother", "father", "home", "sibling")
+        )
+        trigger_lonely = any(
+            k in text_norm for k in ("lonely", "loneliness", "alone", "isolated", "no one")
+        )
+        trigger_overthinking = any(
+            k in text_norm for k in ("overthinking", "overthink", "spiral", "racing thoughts")
+        )
+        trigger_future = any(
+            k in text_norm for k in ("future", "career", "what if", "uncertain", "tomorrow", "path")
+        )
+        trigger_work = any(
+            k in text_norm for k in ("work", "job", "deadline", "boss", "office", "project")
+        )
+        trigger_relationship = any(
+            k in text_norm for k in ("friend", "partner", "relationship", "argument", "breakup")
+        )
+        trigger_body = any(
+            k in text_norm for k in ("body", "chest", "breathing", "heart", "headache", "stomach")
+        )
 
         # Default action + follow-up (randomised so they vary per turn).
-        action_step = random.choice([
-            "Take a slow breath right now — in for 4 counts, out for 6. Then reassess.",
-            "Drink a glass of water and step away for two minutes before continuing.",
-            "Write down one thing you're feeling in one sentence — just naming it helps.",
-            "Do a quick body scan: unclench your jaw, drop your shoulders, relax your hands.",
-        ])
-        follow_up = random.choice([
-            "What would make the next hour feel even slightly more manageable?",
-            "Is there one small thing that might help right now, even 5%?",
-            "What's the heaviest thing sitting with you at this moment?",
-            "What do you need most right now — to vent, think it through, or just be heard?",
-        ])
+        action_step = random.choice(
+            [
+                "Take a slow breath right now — in for 4 counts, out for 6. Then reassess.",
+                "Drink a glass of water and step away for two minutes before continuing.",
+                "Write down one thing you're feeling in one sentence — just naming it helps.",
+                "Do a quick body scan: unclench your jaw, drop your shoulders, relax your hands.",
+            ]
+        )
+        follow_up = random.choice(
+            [
+                "What would make the next hour feel even slightly more manageable?",
+                "Is there one small thing that might help right now, even 5%?",
+                "What's the heaviest thing sitting with you at this moment?",
+                "What do you need most right now — to vent, think it through, or just be heard?",
+            ]
+        )
 
         if trigger_sleep:
-            action_step = random.choice([
-                "Try a 20-minute wind-down tonight: dim lights, no phone, and slow breathing.",
-                "Set a gentle alarm 30 minutes before bed as a signal to start winding down.",
-                "Write out one worry before bed — offloading it from your head onto paper really helps.",
-            ])
-            follow_up = random.choice([
-                "Is it more trouble falling asleep, staying asleep, or waking too early?",
-                "How many nights this week has sleep felt off for you?",
-                "What's usually running through your mind when you can't sleep?",
-            ])
+            action_step = random.choice(
+                [
+                    "Try a 20-minute wind-down tonight: dim lights, no phone, and slow breathing.",
+                    "Set a gentle alarm 30 minutes before bed as a signal to start winding down.",
+                    "Write out one worry before bed — offloading it from your head onto paper really helps.",
+                ]
+            )
+            follow_up = random.choice(
+                [
+                    "Is it more trouble falling asleep, staying asleep, or waking too early?",
+                    "How many nights this week has sleep felt off for you?",
+                    "What's usually running through your mind when you can't sleep?",
+                ]
+            )
         elif trigger_exam:
-            action_step = random.choice([
-                "Pick the single hardest topic and do just 15 focused minutes on it — then stop.",
-                "Write out what you already know about the topic. It's usually more than you think.",
-                "Set a 25-minute timer, work on one thing only, then take a 5-minute real break.",
-            ])
-            follow_up = random.choice([
-                "Which subject or topic feels most out of control right now?",
-                "Is the stress more about the content itself, the time pressure, or both?",
-                "What would 'good enough' preparation actually look like for you?",
-            ])
+            action_step = random.choice(
+                [
+                    "Pick the single hardest topic and do just 15 focused minutes on it — then stop.",
+                    "Write out what you already know about the topic. It's usually more than you think.",
+                    "Set a 25-minute timer, work on one thing only, then take a 5-minute real break.",
+                ]
+            )
+            follow_up = random.choice(
+                [
+                    "Which subject or topic feels most out of control right now?",
+                    "Is the stress more about the content itself, the time pressure, or both?",
+                    "What would 'good enough' preparation actually look like for you?",
+                ]
+            )
         elif trigger_family:
-            action_step = random.choice([
-                "Write one sentence about what you actually need from this situation.",
-                "Give yourself permission to step away physically for 10 minutes.",
-                "Try to name the specific feeling — is it hurt, frustration, or disappointment?",
-            ])
-            follow_up = random.choice([
-                "What part of the family dynamic is weighing on you most right now?",
-                "How long has this particular tension been building?",
-                "Is there someone in the situation you feel even slightly understood by?",
-            ])
+            action_step = random.choice(
+                [
+                    "Write one sentence about what you actually need from this situation.",
+                    "Give yourself permission to step away physically for 10 minutes.",
+                    "Try to name the specific feeling — is it hurt, frustration, or disappointment?",
+                ]
+            )
+            follow_up = random.choice(
+                [
+                    "What part of the family dynamic is weighing on you most right now?",
+                    "How long has this particular tension been building?",
+                    "Is there someone in the situation you feel even slightly understood by?",
+                ]
+            )
         elif trigger_lonely:
-            action_step = random.choice([
-                "Send one low-stakes message to someone — even just 'hey, thinking of you.'",
-                "Spend 10 minutes somewhere with other people around, even without interacting.",
-                "Write a few lines: what kind of connection are you missing most right now?",
-            ])
-            follow_up = random.choice([
-                "Is the loneliness more about missing specific people, or a general disconnection?",
-                "When was the last time you felt genuinely connected to someone?",
-                "Are there people around but it still feels lonely? That's worth exploring.",
-            ])
+            action_step = random.choice(
+                [
+                    "Send one low-stakes message to someone — even just 'hey, thinking of you.'",
+                    "Spend 10 minutes somewhere with other people around, even without interacting.",
+                    "Write a few lines: what kind of connection are you missing most right now?",
+                ]
+            )
+            follow_up = random.choice(
+                [
+                    "Is the loneliness more about missing specific people, or a general disconnection?",
+                    "When was the last time you felt genuinely connected to someone?",
+                    "Are there people around but it still feels lonely? That's worth exploring.",
+                ]
+            )
         elif trigger_overthinking:
-            action_step = random.choice([
-                "Set a 5-minute timer and write every thought down — then close the notebook.",
-                "Pick the single most important thought and ask: can I act on this today, yes or no?",
-                "Name the spiral out loud, then redirect to one physical sensation right now.",
-            ])
-            follow_up = random.choice([
-                "What thought keeps looping back the most?",
-                "Is the overthinking focused on the past, the present, or the future?",
-                "What would you say to a close friend who was stuck in this same loop?",
-            ])
+            action_step = random.choice(
+                [
+                    "Set a 5-minute timer and write every thought down — then close the notebook.",
+                    "Pick the single most important thought and ask: can I act on this today, yes or no?",
+                    "Name the spiral out loud, then redirect to one physical sensation right now.",
+                ]
+            )
+            follow_up = random.choice(
+                [
+                    "What thought keeps looping back the most?",
+                    "Is the overthinking focused on the past, the present, or the future?",
+                    "What would you say to a close friend who was stuck in this same loop?",
+                ]
+            )
         elif trigger_future:
-            action_step = random.choice([
-                "List two things within your control this week and one thing you'll let go of for now.",
-                "Ask yourself: what's the very next smallest step — not the whole path, just the next one.",
-                "Write the worry in one sentence, then write one thing you can do about it today.",
-            ])
-            follow_up = random.choice([
-                "What's the specific future scenario worrying you most right now?",
-                "Is this more about fear of failure, uncertainty, or something else entirely?",
-                "What would 'good enough' look like if perfect isn't the goal?",
-            ])
+            action_step = random.choice(
+                [
+                    "List two things within your control this week and one thing you'll let go of for now.",
+                    "Ask yourself: what's the very next smallest step — not the whole path, just the next one.",
+                    "Write the worry in one sentence, then write one thing you can do about it today.",
+                ]
+            )
+            follow_up = random.choice(
+                [
+                    "What's the specific future scenario worrying you most right now?",
+                    "Is this more about fear of failure, uncertainty, or something else entirely?",
+                    "What would 'good enough' look like if perfect isn't the goal?",
+                ]
+            )
         elif trigger_relationship:
-            action_step = random.choice([
-                "Write one honest sentence about what you need from this relationship right now.",
-                "Give yourself space before responding — 24 hours can genuinely shift perspective.",
-                "Ask yourself: is what I'm feeling more about this person, or a pattern I've seen before?",
-            ])
-            follow_up = random.choice([
-                "What happened that triggered this feeling most recently?",
-                "Are you more hurt, angry, or confused — or a mix of all three?",
-                "What would resolution or relief actually look like in this situation?",
-            ])
+            action_step = random.choice(
+                [
+                    "Write one honest sentence about what you need from this relationship right now.",
+                    "Give yourself space before responding — 24 hours can genuinely shift perspective.",
+                    "Ask yourself: is what I'm feeling more about this person, or a pattern I've seen before?",
+                ]
+            )
+            follow_up = random.choice(
+                [
+                    "What happened that triggered this feeling most recently?",
+                    "Are you more hurt, angry, or confused — or a mix of all three?",
+                    "What would resolution or relief actually look like in this situation?",
+                ]
+            )
         elif trigger_work:
-            action_step = random.choice([
-                "Pick the single most important task and do only that for the next 15 minutes.",
-                "Write out what's actually on your plate — sometimes it's less scary when it's written down.",
-                "Block 10 minutes as a real break — step outside, don't check messages.",
-            ])
-            follow_up = random.choice([
-                "Is the pressure mainly about the volume, a specific deadline, or someone's expectations?",
-                "How long have you been running at this pace without a real break?",
-                "Is there anything on your list you could hand off, delay, or simplify?",
-            ])
+            action_step = random.choice(
+                [
+                    "Pick the single most important task and do only that for the next 15 minutes.",
+                    "Write out what's actually on your plate — sometimes it's less scary when it's written down.",
+                    "Block 10 minutes as a real break — step outside, don't check messages.",
+                ]
+            )
+            follow_up = random.choice(
+                [
+                    "Is the pressure mainly about the volume, a specific deadline, or someone's expectations?",
+                    "How long have you been running at this pace without a real break?",
+                    "Is there anything on your list you could hand off, delay, or simplify?",
+                ]
+            )
         elif trigger_body:
-            action_step = random.choice([
-                "Take three slow breaths: in through the nose, out through the mouth, longer exhale.",
-                "Relax your shoulders, unclench your jaw, and put both feet flat on the floor.",
-                "Step away from the screen for 5 minutes and move your body gently.",
-            ])
-            follow_up = random.choice([
-                "Where in your body are you carrying most of the tension right now?",
-                "Has your body been feeling this way for a while, or did something shift today?",
-                "Physical and emotional stress are tightly linked — what do you think your body is reacting to?",
-            ])
+            action_step = random.choice(
+                [
+                    "Take three slow breaths: in through the nose, out through the mouth, longer exhale.",
+                    "Relax your shoulders, unclench your jaw, and put both feet flat on the floor.",
+                    "Step away from the screen for 5 minutes and move your body gently.",
+                ]
+            )
+            follow_up = random.choice(
+                [
+                    "Where in your body are you carrying most of the tension right now?",
+                    "Has your body been feeling this way for a while, or did something shift today?",
+                    "Physical and emotional stress are tightly linked — what do you think your body is reacting to?",
+                ]
+            )
 
         # Rich template banks per emotional state (5-7 variations, no rigid fixed structure).
         templates: dict[str, list[str]] = {
@@ -494,8 +581,8 @@ def _local_rule_based_response(
                 snippet = snippet[:72] + "..."
             ack_openers = [
                 f'"{snippet}" — ',
-                f"When you say that — ",
-                f"I hear you on that. ",
+                "When you say that — ",
+                "I hear you on that. ",
                 "",  # no ack sometimes feels most natural
                 "",
             ]
@@ -508,8 +595,9 @@ def _local_rule_based_response(
         return fallback
 
 
-
-def _api_chatbot_response(user_text: str, emotion_label: str, mental_pred: int, condition: str = "") -> str:
+def _api_chatbot_response(
+    user_text: str, emotion_label: str, mental_pred: int, condition: str = ""
+) -> str:
     """
     Optional API response path using OpenAI-compatible Chat Completions endpoint.
     Used only when OPENAI_API_KEY is available.
@@ -518,7 +606,9 @@ def _api_chatbot_response(user_text: str, emotion_label: str, mental_pred: int, 
     if not api_key:
         return ""
 
-    fallback = _local_rule_based_response(user_text, emotion_label, mental_pred, condition=condition)
+    fallback = _local_rule_based_response(
+        user_text, emotion_label, mental_pred, condition=condition
+    )
     try:
         system_prompt = (
             "You are a supportive, empathetic, non-clinical mental health companion. "
@@ -553,12 +643,7 @@ def _api_chatbot_response(user_text: str, emotion_label: str, mental_pred: int, 
         )
         response.raise_for_status()
         data = response.json()
-        text = (
-            data.get("choices", [{}])[0]
-            .get("message", {})
-            .get("content", "")
-            .strip()
-        )
+        text = data.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
         return text if text else fallback
     except Exception:
         return fallback
@@ -580,14 +665,21 @@ def generate_chatbot_response(
     """
     history = chat_history or []
     try:
-        api_reply = _api_chatbot_response(user_text, emotion_label, mental_pred, condition=condition)
+        api_reply = _api_chatbot_response(
+            user_text, emotion_label, mental_pred, condition=condition
+        )
         if api_reply and api_reply.strip():
             return api_reply.strip()
-        local_reply = _local_rule_based_response(user_text, emotion_label, mental_pred, history, condition=condition)
-        return local_reply if local_reply.strip() else "I'm here with you. What feels most important to talk about right now?"
+        local_reply = _local_rule_based_response(
+            user_text, emotion_label, mental_pred, history, condition=condition
+        )
+        return (
+            local_reply
+            if local_reply.strip()
+            else "I'm here with you. What feels most important to talk about right now?"
+        )
     except Exception:
         return "I'm here with you. What feels most important to talk about right now?"
-
 
 
 def _chatbot_reply(
@@ -598,7 +690,13 @@ def _chatbot_reply(
     condition: str = "",
 ) -> str:
     """Compatibility wrapper used by the dashboard flow."""
-    return generate_chatbot_response(user_text or "", emotion_label, int(mental_pred), chat_history, condition=condition)
+    return generate_chatbot_response(
+        user_text or "",
+        emotion_label,
+        int(mental_pred),
+        chat_history,
+        condition=condition,
+    )
 
 
 def main() -> None:
@@ -622,11 +720,23 @@ def main() -> None:
     st.header("Model Status")
     status_cols = st.columns(3)
     status_cols[0].metric("Emotion model", "Loaded" if emotion_model_path.exists() else "Missing")
-    status_cols[1].metric("Emotion vectorizer", "Loaded" if emotion_vectorizer_path.exists() else "Missing")
-    status_cols[2].metric("Mental health model", "Loaded" if mental_health_model_path.exists() else "Missing")
+    status_cols[1].metric(
+        "Emotion vectorizer",
+        "Loaded" if emotion_vectorizer_path.exists() else "Missing",
+    )
+    status_cols[2].metric(
+        "Mental health model",
+        "Loaded" if mental_health_model_path.exists() else "Missing",
+    )
 
-    if not (emotion_model_path.exists() and emotion_vectorizer_path.exists() and mental_health_model_path.exists()):
-        st.error("One or more model files are missing under `models/`. Train models first, then reload.")
+    if not (
+        emotion_model_path.exists()
+        and emotion_vectorizer_path.exists()
+        and mental_health_model_path.exists()
+    ):
+        st.error(
+            "One or more model files are missing under `models/`. Train models first, then reload."
+        )
         st.info(
             "Expected files: `models/emotion_model.pkl`, `models/emotion_vectorizer.pkl`, "
             "`models/mental_health_model.pkl`"
@@ -686,7 +796,11 @@ def main() -> None:
                 # Save uploaded audio to a temporary file for SpeechRecognition's AudioFile.
                 model_dir = _repo_root() / "data" / "processed"
                 model_dir.mkdir(parents=True, exist_ok=True)
-                suffix = Path(audio_file.name).suffix.lower() if getattr(audio_file, "name", None) else ".wav"
+                suffix = (
+                    Path(audio_file.name).suffix.lower()
+                    if getattr(audio_file, "name", None)
+                    else ".wav"
+                )
                 if suffix not in {".wav", ".mp3"}:
                     suffix = ".wav"
                 tmp_path = model_dir / f"uploaded_audio_{int(datetime.now().timestamp())}{suffix}"
@@ -699,12 +813,14 @@ def main() -> None:
 
                 if suffix == ".mp3":
                     try:
-                        tmp_wav_for_transcription = model_dir / f"transcription_{int(datetime.now().timestamp())}.wav"
+                        tmp_wav_for_transcription = (
+                            model_dir / f"transcription_{int(datetime.now().timestamp())}.wav"
+                        )
                         audio_seg = AudioSegment.from_mp3(str(tmp_path))
                         audio_seg = audio_seg.set_frame_rate(16000).set_channels(1)
                         audio_seg.export(str(tmp_wav_for_transcription), format="wav")
                         transcription_path = tmp_wav_for_transcription
-                    except Exception as e:
+                    except Exception:
                         st.error(
                             "Could not convert MP3 for transcription. Ensure ffmpeg is installed and on your PATH."
                         )
@@ -789,7 +905,10 @@ def main() -> None:
                         confidence = float(proba[classes.index(condition)])
                     sorted_preds = sorted(zip(classes, proba), key=lambda x: -x[1])
                     top_3 = [
-                        (CONDITION_DISPLAY.get(c, c.replace("_", " ").title()), float(p))
+                        (
+                            CONDITION_DISPLAY.get(c, c.replace("_", " ").title()),
+                            float(p),
+                        )
                         for c, p in sorted_preds[:3]
                     ]
             except Exception:
@@ -800,7 +919,6 @@ def main() -> None:
             # chatbot seeding and mood history that pre-date multi-class.
             mental_pred = 1 if condition in CONCERN_CONDITIONS else 0
 
-
             st.success("Analysis complete.")
 
             st.subheader("Results")
@@ -810,14 +928,24 @@ def main() -> None:
                 st.markdown("#### Detected Emotion")
                 if "positive" in emotion_label.lower() or emotion_label.lower() == "happy":
                     st.success(emotion_label.capitalize())
-                elif any(k in emotion_label.lower() for k in ("negative", "angry", "anxious", "sad")):
+                elif any(
+                    k in emotion_label.lower() for k in ("negative", "angry", "anxious", "sad")
+                ):
                     st.warning(emotion_label.capitalize())
                 else:
                     st.info(emotion_label.capitalize())
 
             with results_col2:
                 st.markdown("#### Detected Condition")
-                concern_conditions_display = {"depression", "anxiety", "anger", "stress", "suicidal", "bipolar", "personality disorder"}
+                concern_conditions_display = {
+                    "depression",
+                    "anxiety",
+                    "anger",
+                    "stress",
+                    "suicidal",
+                    "bipolar",
+                    "personality disorder",
+                }
                 if condition in concern_conditions_display:
                     st.error(f"{mental_label}")
                 elif condition == "happy":
@@ -853,12 +981,16 @@ def main() -> None:
                     "emotion": emotion_label,
                     "condition": mental_label,
                     "mental_pred": int(mental_pred),
-                    "confidence": f"{int(round(confidence * 100))}%" if confidence is not None else "N/A",
+                    "confidence": (
+                        f"{int(round(confidence * 100))}%" if confidence is not None else "N/A"
+                    ),
                 }
             )
 
             # Seed chatbot with an emotion-based assistant message
-            assistant_msg = _chatbot_reply(emotion_label, mental_pred, user_text=None, condition=condition)
+            assistant_msg = _chatbot_reply(
+                emotion_label, mental_pred, user_text=None, condition=condition
+            )
             st.session_state.chat_messages.append({"role": "assistant", "content": assistant_msg})
         except Exception as e:
             st.error(f"Prediction failed: {e}")
@@ -871,8 +1003,22 @@ def main() -> None:
         else:
             df = pd.DataFrame(history)
             # Keep display tidy and predictable.
-            display_cols = [c for c in ["timestamp", "emotion", "condition", "confidence", "mental_pred"] if c in df.columns]
-            chart_df = df["mental_pred"].tail(50).reset_index(drop=True) if "mental_pred" in df.columns else None
+            display_cols = [
+                c
+                for c in [
+                    "timestamp",
+                    "emotion",
+                    "condition",
+                    "confidence",
+                    "mental_pred",
+                ]
+                if c in df.columns
+            ]
+            chart_df = (
+                df["mental_pred"].tail(50).reset_index(drop=True)
+                if "mental_pred" in df.columns
+                else None
+            )
             depression_count = int(chart_df.sum()) if chart_df is not None else 0
 
             history_col1, history_col2 = st.columns([1.2, 1], gap="large")
@@ -881,7 +1027,9 @@ def main() -> None:
             with history_col2:
                 st.metric("Concerns flagged (last runs)", depression_count)
                 if chart_df is not None:
-                    st.caption("Concern trend (0 = no concern, 1 = concern flagged) for the last runs.")
+                    st.caption(
+                        "Concern trend (0 = no concern, 1 = concern flagged) for the last runs."
+                    )
                     st.line_chart(chart_df)
 
             if st.button("Clear history", use_container_width=True):
@@ -897,19 +1045,33 @@ def main() -> None:
 
         if has_context:
             emotion_display = str(last_emotion).capitalize()
-            condition_display = CONDITION_DISPLAY.get(
-                str(last_condition), str(last_condition).replace("_", " ").title()
-            ) if last_condition else ("Concern detected" if last_mental_pred == 1 else "No major concern")
+            condition_display = (
+                CONDITION_DISPLAY.get(
+                    str(last_condition), str(last_condition).replace("_", " ").title()
+                )
+                if last_condition
+                else ("Concern detected" if last_mental_pred == 1 else "No major concern")
+            )
             ctx_col1, ctx_col2, ctx_col3 = st.columns([2, 2, 1])
             with ctx_col1:
                 if "positive" in str(last_emotion).lower() or last_emotion == "happy":
                     st.success(f"Emotion: {emotion_display}")
-                elif any(k in str(last_emotion).lower() for k in ("negative", "anxious", "sad", "anger")):
+                elif any(
+                    k in str(last_emotion).lower() for k in ("negative", "anxious", "sad", "anger")
+                ):
                     st.warning(f"Emotion: {emotion_display}")
                 else:
                     st.info(f"Emotion: {emotion_display}")
             with ctx_col2:
-                concern_set = {"depression", "anxiety", "anger", "stress", "suicidal", "bipolar", "personality disorder"}
+                concern_set = {
+                    "depression",
+                    "anxiety",
+                    "anger",
+                    "stress",
+                    "suicidal",
+                    "bipolar",
+                    "personality disorder",
+                }
                 if last_condition in concern_set:
                     st.error(f"Condition: {condition_display}")
                 elif last_condition == "happy":
@@ -968,6 +1130,7 @@ def main() -> None:
             st.session_state.chat_messages.append({"role": "assistant", "content": reply})
             with st.chat_message("assistant"):
                 st.markdown(reply)
+
 
 if __name__ == "__main__":
     main()

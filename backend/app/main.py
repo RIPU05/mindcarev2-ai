@@ -24,7 +24,10 @@ from app.exceptions import MindCareException
 logger = get_logger(__name__)
 
 openapi_tags = [
-    {"name": "auth", "description": "Supabase Auth JWT contract and current-user endpoints."},
+    {
+        "name": "auth",
+        "description": "Supabase Auth JWT contract and current-user endpoints.",
+    },
     {"name": "journal", "description": "Journal entry request and response contracts."},
     {"name": "analysis", "description": "Mood analysis request and status contracts."},
     {"name": "moods", "description": "Mood check-in and history contracts."},
@@ -82,7 +85,19 @@ def create_app() -> FastAPI:
     app.include_router(api_router, prefix=settings.api_prefix)
     app.include_router(api_router)
 
+    from fastapi import Response
+    from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
+
+    @app.get("/metrics", tags=["health"])
+    def prometheus_metrics():
+        return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
+
     register_exception_handlers(app)
+
+    from app.core.telemetry import instrument_fastapi_app
+
+    instrument_fastapi_app(app)
+
     return app
 
 
@@ -109,9 +124,7 @@ def register_exception_handlers(app: FastAPI) -> None:
         )
 
     @app.exception_handler(StarletteHTTPException)
-    async def http_exception_handler(
-        request: Request, exc: StarletteHTTPException
-    ) -> JSONResponse:
+    async def http_exception_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:
         logger.warning(
             "http_exception",
             extra={

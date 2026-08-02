@@ -22,7 +22,7 @@ from app.services.factory import get_ai_services
 
 router = APIRouter(prefix="/analysis", tags=["analysis"], dependencies=[Depends(get_current_user)])
 
-ERROR_RESPONSES = {
+ERROR_RESPONSES: dict[int | str, dict] = {
     400: {"model": ErrorResponse},
     401: {"model": ErrorResponse},
     413: {"model": ErrorResponse},
@@ -32,7 +32,12 @@ ERROR_RESPONSES = {
 }
 
 
-@router.post("/text", response_model=MoodAnalysisResponse, status_code=200, responses=ERROR_RESPONSES)
+@router.post(
+    "/text",
+    response_model=MoodAnalysisResponse,
+    status_code=200,
+    responses=ERROR_RESPONSES,
+)
 async def analyze_text(
     payload: TextAnalysisRequest,
     current_user: User = Depends(get_current_user),
@@ -65,20 +70,60 @@ async def analyze_text(
             safety = await services.safety.screen(
                 {
                     "text": payload.text,
-                    "journal_id": str(payload.journal_id) if payload.journal_id else None,
+                    "journal_id": (str(payload.journal_id) if payload.journal_id else None),
                     "user_id": str(current_user.id),
                 }
             )
             emotion = await services.emotion.analyze(
                 {"text": payload.text, "analysis_id": str(analysis.id)}
             )
+
+            from app.rag.factory import get_rag_components
+            from app.rag.types import RetrievalSource, SearchQuery
+
+            rag_context_str = ""
+            try:
+                rag = get_rag_components(uow.session)
+                sources = [
+                    RetrievalSource.JOURNAL,
+                    RetrievalSource.REFLECTION,
+                    RetrievalSource.MOOD,
+                ]
+                query = SearchQuery(
+                    text=payload.text,
+                    user_id=current_user.id,
+                    sources=tuple(sources),
+                    limit=3,
+                )
+                if rag.retriever:
+                    retrieved_docs = await rag.retriever.retrieve(query)
+                    if retrieved_docs:
+                        rag_lines = []
+                        for doc in retrieved_docs:
+                            src = doc.document.source
+                            txt = doc.document.text
+                            created = (
+                                doc.document.created_at.strftime("%Y-%m-%d %H:%M")
+                                if doc.document.created_at
+                                else "Unknown Date"
+                            )
+                            rag_lines.append(f"[{src} on {created}]: {txt}")
+                        rag_context_str = "\n".join(rag_lines)
+            except Exception as e:
+                import logging
+
+                logging.getLogger(__name__).warning(
+                    f"RAG context retrieval failed during analysis: {e}"
+                )
+
             reflection = await services.reflection.generate(
                 {
-                    "journal_id": str(payload.journal_id) if payload.journal_id else None,
+                    "journal_id": (str(payload.journal_id) if payload.journal_id else None),
                     "analysis_id": str(analysis.id),
                     "text": payload.text,
                     "primary_mood": emotion.primary_mood,
                     "risk_level": safety.risk_level,
+                    "rag_context": rag_context_str,
                 }
             )
             completed_at = datetime.now(UTC)
@@ -105,6 +150,21 @@ async def analyze_text(
                 "follow_up_questions": reflection.follow_up_questions,
                 "safety": safety.model_dump(mode="json"),
             }
+            if reflection.reflection:
+                import asyncio
+
+                from app.rag.embeddings import generate_and_store_embedding
+                from app.rag.types import RetrievalSource
+
+                asyncio.create_task(
+                    generate_and_store_embedding(
+                        text=reflection.reflection,
+                        source=RetrievalSource.REFLECTION,
+                        document_id=str(analysis.id),
+                        user_id=analysis.user_id,
+                        metadata={"summary": reflection.summary},
+                    )
+                )
         except AIProviderError as exc:
             completed_at = datetime.now(UTC)
             analysis.status = AnalysisStatus.FAILED
@@ -122,7 +182,12 @@ async def analyze_text(
         return analysis_response(analysis)
 
 
-@router.post("/audio", response_model=MoodAnalysisResponse, status_code=202, responses=ERROR_RESPONSES)
+@router.post(
+    "/audio",
+    response_model=MoodAnalysisResponse,
+    status_code=202,
+    responses=ERROR_RESPONSES,
+)
 async def analyze_audio(
     payload: AudioAnalysisRequest,
     current_user: User = Depends(get_current_user),
@@ -140,7 +205,9 @@ async def analyze_audio(
                 risk_level=RiskLevel.UNKNOWN,
                 emotion_scores={},
                 provider_metadata={
-                    "media_file_id": str(payload.media_file_id) if payload.media_file_id else None,
+                    "media_file_id": (
+                        str(payload.media_file_id) if payload.media_file_id else None
+                    ),
                     "audio_url": str(payload.audio_url) if payload.audio_url else None,
                     "upload_id": payload.upload_id,
                     "ai_pending": True,
@@ -164,6 +231,11 @@ async def validate_journal_reference(
 
 
 def analysis_response(analysis: MoodAnalysis) -> MoodAnalysisResponse:
+    from decimal import Decimal
+
+    from app.schemas.ai import AIProviderMetadata
+    from app.schemas.enums import AIProvider as SchemaAIProvider
+
     scores = analysis.emotion_scores or {}
     emotions = [
         EmotionScore(label=str(label), score=float(score))
@@ -171,6 +243,7 @@ def analysis_response(analysis: MoodAnalysis) -> MoodAnalysisResponse:
         if isinstance(score, (int, float))
     ]
     metadata = analysis.provider_metadata or {}
+    provider_name = metadata.get("provider")
     return MoodAnalysisResponse(
         id=analysis.id,
         input_type=analysis.input_type,
@@ -179,15 +252,26 @@ def analysis_response(analysis: MoodAnalysis) -> MoodAnalysisResponse:
         confidence=analysis.confidence or 0.0,
         risk_level=analysis.risk_level,
         emotions=emotions,
-        ai_metadata={
-            "provider": metadata.get("provider"),
-            "provider_model": metadata.get("model"),
-            "provider_latency_ms": metadata.get("latency_ms"),
-            "provider_cost": metadata.get("cost_usd"),
-            "provider_request_id": metadata.get("request_id"),
-        }
-        if metadata.get("provider")
-        else None,
+        ai_metadata=(
+            AIProviderMetadata(
+                provider=(
+                    SchemaAIProvider(provider_name)
+                    if isinstance(provider_name, str)
+                    and provider_name in [e.value for e in SchemaAIProvider]
+                    else None
+                ),
+                provider_model=metadata.get("model"),
+                provider_latency_ms=metadata.get("latency_ms"),
+                provider_cost=(
+                    Decimal(str(metadata.get("cost_usd")))
+                    if metadata.get("cost_usd") is not None
+                    else None
+                ),
+                provider_request_id=metadata.get("request_id"),
+            )
+            if provider_name
+            else None
+        ),
         queued_at=analysis.created_at,
         started_at=metadata.get("processing_started_at"),
         completed_at=metadata.get("processing_completed_at"),

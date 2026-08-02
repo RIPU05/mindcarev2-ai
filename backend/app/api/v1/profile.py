@@ -9,7 +9,7 @@ from app.schemas.profile import ProfileResponse, ProfileUpdateRequest
 
 router = APIRouter(prefix="/profile", tags=["profile"], dependencies=[Depends(get_current_user)])
 
-ERROR_RESPONSES = {
+ERROR_RESPONSES: dict[int | str, dict] = {
     400: {"model": ErrorResponse},
     401: {"model": ErrorResponse},
     422: {"model": ErrorResponse},
@@ -18,7 +18,9 @@ ERROR_RESPONSES = {
 
 
 @router.get("", response_model=ProfileResponse, status_code=200, responses=ERROR_RESPONSES)
-async def get_profile(current_user: User = Depends(get_current_user)) -> ProfileResponse:
+async def get_profile(
+    current_user: User = Depends(get_current_user),
+) -> ProfileResponse:
     async with UnitOfWork() as uow:
         profile = await ensure_profile(current_user, ProfileRepository(uow.session))
         await uow.commit()

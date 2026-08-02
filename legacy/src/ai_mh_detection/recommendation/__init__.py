@@ -1,3 +1,3 @@
-from .recommender import Recommender, Recommendation
+from .recommender import Recommendation, Recommender
 
 __all__ = ["Recommender", "Recommendation"]

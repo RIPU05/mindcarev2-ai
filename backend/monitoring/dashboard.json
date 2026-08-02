@@ -1,0 +1,172 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 1,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "title": "Requests per Second (RPS)",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum(rate(http_requests_total[1m])) by (method, status)",
+          "legendFormat": "{{method}} - {{status}}"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "id": 2,
+      "title": "HTTP Request Latency (p95)",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))",
+          "legendFormat": "p95 Latency"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
+      "id": 3,
+      "title": "AI Provider Latency (Mean)",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum(rate(ai_request_duration_seconds_sum[5m])) by (provider, model, stage) / sum(rate(ai_request_duration_seconds_count[5m])) by (provider, model, stage)",
+          "legendFormat": "{{provider}} ({{model}}) - {{stage}}"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 8
+      },
+      "id": 4,
+      "title": "AI Provider Failures",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum(rate(ai_errors_total[1m])) by (provider, error_type)",
+          "legendFormat": "{{provider}} - {{error_type}}"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 16
+      },
+      "id": 5,
+      "title": "AI Token Usage Accumulation",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum(rate(ai_token_usage_total[5m])) by (provider, model, token_type)",
+          "legendFormat": "{{provider}} ({{model}}) - {{token_type}}"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 16
+      },
+      "id": 6,
+      "title": "AI Estimated Cost Rate (USD/min)",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum(rate(ai_estimated_cost_usd[5m])) * 60",
+          "legendFormat": "Cost rate (USD/min)"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 24
+      },
+      "id": 7,
+      "title": "Embedding Generation Latency (Mean)",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum(rate(embedding_generation_duration_seconds_sum[5m])) / sum(rate(embedding_generation_duration_seconds_count[5m]))",
+          "legendFormat": "Embedding latency"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 24
+      },
+      "id": 8,
+      "title": "RAG Retrieval Latency (Mean)",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum(rate(rag_retrieval_duration_seconds_sum[5m])) / sum(rate(rag_retrieval_duration_seconds_count[5m]))",
+          "legendFormat": "RAG latency"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 36,
+  "style": "dark",
+  "tags": ["mindcare"],
+  "timezone": "browser",
+  "title": "MindCare AI production ready observability Dashboard",
+  "version": 1
+}

@@ -7,13 +7,23 @@ from anyio import to_thread
 from jwt import ExpiredSignatureError, InvalidTokenError, PyJWKClient
 
 from app.auth.config import SupabaseAuthConfig, get_supabase_auth_config
-from app.exceptions import ExpiredTokenException, InvalidTokenException
-from app.exceptions import AuthenticationException
+from app.exceptions import AuthenticationException, ExpiredTokenException, InvalidTokenException
 
 
 class SupabaseAuthClient:
     def __init__(self, config: SupabaseAuthConfig | None = None) -> None:
         self.config = config or get_supabase_auth_config()
+        self._blacklisted_access_tokens: set[str] = set()
+        self._rotated_refresh_tokens: set[str] = set()
+
+    def invalidate_access_token(self, token: str) -> None:
+        self._blacklisted_access_tokens.add(token)
+
+    def invalidate_refresh_token(self, token: str) -> None:
+        self._rotated_refresh_tokens.add(token)
+
+    def is_refresh_token_invalid(self, token: str) -> bool:
+        return token in self._rotated_refresh_tokens
 
     @cached_property
     def jwk_client(self) -> PyJWKClient | None:
@@ -22,6 +32,8 @@ class SupabaseAuthClient:
         return PyJWKClient(self.config.jwks_url)
 
     async def verify_token(self, token: str) -> dict[str, Any]:
+        if token in self._blacklisted_access_tokens:
+            raise InvalidTokenException("Authentication token has been blacklisted.")
         try:
             unverified_header = jwt.get_unverified_header(token)
             algorithm = unverified_header.get("alg", "HS256")
@@ -49,7 +61,10 @@ class SupabaseAuthClient:
             raise InvalidTokenException("Authentication token is invalid.") from exc
 
     async def _get_signing_key(self, token: str) -> Any:
-        return await to_thread.run_sync(lambda: self.jwk_client.get_signing_key_from_jwt(token).key)
+        client = self.jwk_client
+        if client is None:
+            raise InvalidTokenException("JWK client is not initialized.")
+        return await to_thread.run_sync(lambda: client.get_signing_key_from_jwt(token).key)
 
     async def sign_in_with_password(self, email: str, password: str) -> dict[str, Any]:
         return await self._auth_request(
@@ -63,7 +78,11 @@ class SupabaseAuthClient:
         return await self._auth_request(
             "POST",
             "/signup",
-            json={"email": email, "password": password, "data": {"display_name": display_name}},
+            json={
+                "email": email,
+                "password": password,
+                "data": {"display_name": display_name},
+            },
             use_anon_key=True,
         )
 
@@ -116,7 +135,12 @@ class SupabaseAuthClient:
             detail = response.text
             try:
                 payload = response.json()
-                detail = payload.get("msg") or payload.get("message") or payload.get("error_description") or detail
+                detail = (
+                    payload.get("msg")
+                    or payload.get("message")
+                    or payload.get("error_description")
+                    or detail
+                )
             except ValueError:
                 pass
             raise AuthenticationException(str(detail))

@@ -1,0 +1,67 @@
+name: MindCare AI Backend CI
+
+on:
+  push:
+    branches: [ main, master, mindcare-v2 ]
+  pull_request:
+    branches: [ main, master, mindcare-v2 ]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libpq-dev build-essential
+
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+          pip install pytest pytest-asyncio pytest-cov httpx bandit safety pip-audit psutil prometheus-client opentelemetry-api opentelemetry-sdk opentelemetry-instrumentation-fastapi
+          pip install black==25.1.0 isort==5.13.2 ruff==0.12.7 mypy==1.17.1
+
+      - name: Code Formatting Check (Black)
+        run: black --config backend/pyproject.toml --check backend/app
+
+      - name: Import Sorting Check (isort)
+        run: isort --settings-path backend/pyproject.toml --check-only backend/app
+
+      - name: Lint Audits (Ruff)
+        run: ruff check --config backend/pyproject.toml backend/app
+
+      - name: Type Inspection (mypy)
+        run: mypy --config-file backend/pyproject.toml backend/app
+
+      - name: Security Scanning (Bandit)
+        run: bandit -r backend/app -ll
+
+      - name: Dependency Vulnerability Scanning (Safety)
+        run: safety check || true
+
+      - name: Dependency Auditing (pip-audit)
+        run: pip-audit || true
+
+      - name: Code Compilation Check
+        run: python -m compileall backend/app
+
+      - name: Run Pytest Suite & Coverage
+        run: |
+          cd backend
+          python -m pytest --cov=app --cov-report=xml --cov-report=term-missing
+
+      - name: Upload Test Coverage Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: backend/coverage.xml

@@ -10,7 +10,7 @@ from app.schemas.settings import UserSettingsResponse, UserSettingsUpdateRequest
 
 router = APIRouter(prefix="/settings", tags=["profile"], dependencies=[Depends(get_current_user)])
 
-ERROR_RESPONSES = {
+ERROR_RESPONSES: dict[int | str, dict] = {
     401: {"model": ErrorResponse},
     404: {"model": ErrorResponse},
     422: {"model": ErrorResponse},
@@ -19,7 +19,9 @@ ERROR_RESPONSES = {
 
 
 @router.get("", response_model=UserSettingsResponse, status_code=200, responses=ERROR_RESPONSES)
-async def get_settings(current_user: User = Depends(get_current_user)) -> UserSettingsResponse:
+async def get_settings(
+    current_user: User = Depends(get_current_user),
+) -> UserSettingsResponse:
     async with UnitOfWork() as uow:
         settings = await ensure_settings(current_user, UserSettingsRepository(uow.session))
         await uow.commit()
@@ -54,8 +56,15 @@ async def delete_settings(current_user: User = Depends(get_current_user)) -> Non
     return None
 
 
-@router.post("/restore", response_model=UserSettingsResponse, status_code=200, responses=ERROR_RESPONSES)
-async def restore_settings(current_user: User = Depends(get_current_user)) -> UserSettingsResponse:
+@router.post(
+    "/restore",
+    response_model=UserSettingsResponse,
+    status_code=200,
+    responses=ERROR_RESPONSES,
+)
+async def restore_settings(
+    current_user: User = Depends(get_current_user),
+) -> UserSettingsResponse:
     async with UnitOfWork() as uow:
         repository = UserSettingsRepository(uow.session)
         settings = await repository.get_by_user_id(current_user.id)

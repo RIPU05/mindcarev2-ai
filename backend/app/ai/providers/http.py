@@ -54,11 +54,17 @@ class JsonHttpAIClient:
                 async with httpx.AsyncClient(timeout=self.retry_policy.timeout_seconds) as client:
                     response = await client.post(url, params=params, headers=headers, json=payload)
                 if response.status_code == 429:
-                    raise RateLimitError(f"{self.provider} rate limit exceeded.", details={"request_id": local_request_id})
+                    raise RateLimitError(
+                        f"{self.provider} rate limit exceeded.",
+                        details={"request_id": local_request_id},
+                    )
                 if response.status_code in self.retry_policy.retryable_status_codes:
                     raise AIProviderError(
                         f"{self.provider} returned a retryable error.",
-                        details={"status_code": response.status_code, "request_id": local_request_id},
+                        details={
+                            "status_code": response.status_code,
+                            "request_id": local_request_id,
+                        },
                     )
                 response.raise_for_status()
                 raw = response.json()
@@ -87,8 +93,11 @@ class JsonHttpAIClient:
                     token_usage=extract_usage(raw),
                     raw=raw,
                 )
-            except httpx.TimeoutException as exc:
-                last_error = TimeoutError(f"{self.provider} request timed out.", details={"request_id": local_request_id})
+            except httpx.TimeoutException:
+                last_error = TimeoutError(
+                    f"{self.provider} request timed out.",
+                    details={"request_id": local_request_id},
+                )
             except RateLimitError:
                 raise
             except (httpx.HTTPError, AIProviderError) as exc:
@@ -110,4 +119,6 @@ class JsonHttpAIClient:
 
         if isinstance(last_error, AIProviderError):
             raise last_error
-        raise AIProviderError(f"{self.provider} request failed.", details={"request_id": local_request_id}) from last_error
+        raise AIProviderError(
+            f"{self.provider} request failed.", details={"request_id": local_request_id}
+        ) from last_error

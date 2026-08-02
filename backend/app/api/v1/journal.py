@@ -20,7 +20,7 @@ from app.utils.pagination import PaginationParams
 
 router = APIRouter(prefix="/journal", tags=["journal"], dependencies=[Depends(get_current_user)])
 
-ERROR_RESPONSES = {
+ERROR_RESPONSES: dict[int | str, dict] = {
     400: {"model": ErrorResponse},
     401: {"model": ErrorResponse},
     404: {"model": ErrorResponse},
@@ -46,6 +46,22 @@ async def create_journal_entry(
             )
         )
         await uow.commit()
+
+        import asyncio
+
+        from app.rag.embeddings import generate_and_store_embedding
+        from app.rag.types import RetrievalSource
+
+        asyncio.create_task(
+            generate_and_store_embedding(
+                text=entry.content,
+                source=RetrievalSource.JOURNAL,
+                document_id=str(entry.id),
+                user_id=entry.user_id,
+                metadata={"title": entry.title},
+            )
+        )
+
         return journal_response(entry)
 
 
@@ -118,6 +134,22 @@ async def update_journal_entry(
         entry.version += 1
         await repository.update(entry)
         await uow.commit()
+
+        import asyncio
+
+        from app.rag.embeddings import generate_and_store_embedding
+        from app.rag.types import RetrievalSource
+
+        asyncio.create_task(
+            generate_and_store_embedding(
+                text=entry.content,
+                source=RetrievalSource.JOURNAL,
+                document_id=str(entry.id),
+                user_id=entry.user_id,
+                metadata={"title": entry.title},
+            )
+        )
+
         return journal_response(entry)
 
 
@@ -136,7 +168,12 @@ async def delete_journal_entry(
     return None
 
 
-@router.post("/{id}/restore", response_model=JournalResponse, status_code=200, responses=ERROR_RESPONSES)
+@router.post(
+    "/{id}/restore",
+    response_model=JournalResponse,
+    status_code=200,
+    responses=ERROR_RESPONSES,
+)
 async def restore_journal_entry(
     id: UUID,
     current_user: User = Depends(get_current_user),

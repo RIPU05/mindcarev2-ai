@@ -15,7 +15,7 @@ from app.utils.pagination import PaginationParams
 
 router = APIRouter(prefix="/moods", tags=["moods"], dependencies=[Depends(get_current_user)])
 
-ERROR_RESPONSES = {
+ERROR_RESPONSES: dict[int | str, dict] = {
     401: {"model": ErrorResponse},
     404: {"model": ErrorResponse},
     422: {"model": ErrorResponse},
@@ -23,7 +23,12 @@ ERROR_RESPONSES = {
 }
 
 
-@router.get("", response_model=MoodHistoryListResponse, status_code=200, responses=ERROR_RESPONSES)
+@router.get(
+    "",
+    response_model=MoodHistoryListResponse,
+    status_code=200,
+    responses=ERROR_RESPONSES,
+)
 async def list_moods(
     current_user: User = Depends(get_current_user),
     limit: int = Query(default=50, ge=1, le=100),
@@ -60,7 +65,12 @@ async def list_moods(
         return MoodHistoryListResponse(items=[mood_response(item) for item in items], total=total)
 
 
-@router.get("/{id}", response_model=MoodHistoryResponse, status_code=200, responses=ERROR_RESPONSES)
+@router.get(
+    "/{id}",
+    response_model=MoodHistoryResponse,
+    status_code=200,
+    responses=ERROR_RESPONSES,
+)
 async def get_mood(
     id: UUID,
     current_user: User = Depends(get_current_user),

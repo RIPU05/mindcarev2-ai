@@ -1,6 +1,5 @@
 from typing import Any
 
-
 TEXT_ANALYSIS_PROMPT = (
     "Analyze the journal text for safety risk, primary mood, confidence, emotions, themes, "
     "suggestions, and follow-up questions. Return strict JSON."

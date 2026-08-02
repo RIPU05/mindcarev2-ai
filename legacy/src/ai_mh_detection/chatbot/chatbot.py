@@ -17,7 +17,9 @@ class SupportChatbot:
     If you add an LLM, keep a safety layer between user input and generation.
     """
 
-    def respond(self, user_text: str, prediction: PredictionResult | None = None) -> ChatbotResponse:
+    def respond(
+        self, user_text: str, prediction: PredictionResult | None = None
+    ) -> ChatbotResponse:
         if prediction is not None and prediction.label == "high_risk":
             return ChatbotResponse(
                 message=(

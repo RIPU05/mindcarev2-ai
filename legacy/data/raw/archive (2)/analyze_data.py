@@ -35,252 +35,238 @@ The analysis includes calculating high-level statistics as well as correlation
 among emotion labels.
 """
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function
+
 import json
 import os
-from absl import app
-from absl import flags
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from scipy.cluster.hierarchy import dendrogram
-from scipy.cluster.hierarchy import linkage
-from scipy.spatial.distance import pdist
 import seaborn as sns
+from absl import app, flags
+from scipy.cluster.hierarchy import dendrogram, linkage
+from scipy.spatial.distance import pdist
 
 FLAGS = flags.FLAGS
 
-flags.DEFINE_string("data", "data/full_dataset",
-                    "Directory containing full dataset.")
+flags.DEFINE_string("data", "data/full_dataset", "Directory containing full dataset.")
 
-flags.DEFINE_string("plot_dir", "plots",
-                    "Directory for saving plots and analyses.")
+flags.DEFINE_string("plot_dir", "plots", "Directory for saving plots and analyses.")
 
-flags.DEFINE_string("emotion_file", "data/emotions.txt",
-                    "File containing list of emotions.")
-flags.DEFINE_string("sentiment_dict", "data/sentiment_dict.json",
-                    "Sentiment dictionary.")
+flags.DEFINE_string("emotion_file", "data/emotions.txt", "File containing list of emotions.")
+flags.DEFINE_string("sentiment_dict", "data/sentiment_dict.json", "Sentiment dictionary.")
 
 
 def CheckAgreement(ex, min_agreement, all_emotions, max_agreement=100):
-  """Return the labels that at least min_agreement raters agree on."""
-  sum_ratings = ex[all_emotions].sum(axis=0)
-  agreement = ((sum_ratings >= min_agreement) & (sum_ratings <= max_agreement))
-  return ",".join(sum_ratings.index[agreement].tolist())
+    """Return the labels that at least min_agreement raters agree on."""
+    sum_ratings = ex[all_emotions].sum(axis=0)
+    agreement = (sum_ratings >= min_agreement) & (sum_ratings <= max_agreement)
+    return ",".join(sum_ratings.index[agreement].tolist())
 
 
 def CountLabels(labels):
-  if (not isinstance(labels, float)) and labels:
-    return len(labels.split(","))
-  return 0
+    if (not isinstance(labels, float)) and labels:
+        return len(labels.split(","))
+    return 0
 
 
 def main(_):
-  print("Loading data...")
-  dfs = []
-  for filename in os.listdir(FLAGS.data):
-    if filename.endswith(".csv"):
-      dfs.append(
-          pd.read_csv(os.path.join(FLAGS.data, filename), encoding="utf-8"))
-  data = pd.concat(dfs)
-  print("%d Examples" % (len(set(data["id"]))))
-  print("%d Annotations" % len(data))
-  
-  if not os.path.isdir(FLAGS.plot_dir):
-    os.makedirs(FLAGS.plot_dir)
+    print("Loading data...")
+    dfs = []
+    for filename in os.listdir(FLAGS.data):
+        if filename.endswith(".csv"):
+            dfs.append(pd.read_csv(os.path.join(FLAGS.data, filename), encoding="utf-8"))
+    data = pd.concat(dfs)
+    print("%d Examples" % (len(set(data["id"]))))
+    print("%d Annotations" % len(data))
 
-  with open(FLAGS.emotion_file, "r") as f:
-    all_emotions = f.read().splitlines()
-  all_emotions_neutral = all_emotions + ["neutral"]
-  print("%d emotion Categories" % len(all_emotions))
+    if not os.path.isdir(FLAGS.plot_dir):
+        os.makedirs(FLAGS.plot_dir)
 
-  print("%d unique raters" % len(data["rater_id"].unique()))
-  print("%.3f marked unclear" %
-        (data["example_very_unclear"].sum() / len(data)))
+    with open(FLAGS.emotion_file, "r") as f:
+        all_emotions = f.read().splitlines()
+    all_emotions_neutral = all_emotions + ["neutral"]
+    print("%d emotion Categories" % len(all_emotions))
 
-  # Since the ones marked as difficult have no labels, exclude those
-  data = data[data[all_emotions_neutral].sum(axis=1) != 0]
+    print("%d unique raters" % len(data["rater_id"].unique()))
+    print("%.3f marked unclear" % (data["example_very_unclear"].sum() / len(data)))
 
-  print("Distribution of number of labels per example:")
-  print(data[all_emotions_neutral].sum(axis=1).value_counts() / len(data))
-  print("%.2f with more than 3 labels" %
-        ((data[all_emotions_neutral].sum(axis=1) > 3).sum() /
-         len(data)))  # more than 3 labels
+    # Since the ones marked as difficult have no labels, exclude those
+    data = data[data[all_emotions_neutral].sum(axis=1) != 0]
 
-  print("Label distributions:")
-  print((data[all_emotions_neutral].sum(axis=0).sort_values(ascending=False) /
-         len(data) * 100).round(2))
+    print("Distribution of number of labels per example:")
+    print(data[all_emotions_neutral].sum(axis=1).value_counts() / len(data))
+    print(
+        "%.2f with more than 3 labels"
+        % ((data[all_emotions_neutral].sum(axis=1) > 3).sum() / len(data))
+    )  # more than 3 labels
 
-  print("Plotting label correlations...")
-  ratings = data.groupby("id")[all_emotions].mean()
+    print("Label distributions:")
+    print(
+        (
+            data[all_emotions_neutral].sum(axis=0).sort_values(ascending=False) / len(data) * 100
+        ).round(2)
+    )
 
-  # Compute the correlation matrix
-  corr = ratings.corr()
+    print("Plotting label correlations...")
+    ratings = data.groupby("id")[all_emotions].mean()
 
-  # Generate a mask for the upper triangle
-  mask = np.zeros_like(corr, dtype=np.bool)
-  mask[np.triu_indices_from(mask)] = True
+    # Compute the correlation matrix
+    corr = ratings.corr()
 
-  # Set up the matplotlib figure
-  fig, _ = plt.subplots(figsize=(11, 9))
+    # Generate a mask for the upper triangle
+    mask = np.zeros_like(corr, dtype=np.bool)
+    mask[np.triu_indices_from(mask)] = True
 
-  # Generate a custom diverging colormap
-  cmap = sns.diverging_palette(220, 10, as_cmap=True)
+    # Set up the matplotlib figure
+    fig, _ = plt.subplots(figsize=(11, 9))
 
-  # Draw the heatmap with the mask and correct aspect ratio
-  sns.heatmap(
-      corr,
-      mask=mask,
-      cmap=cmap,
-      vmax=.3,
-      center=0,
-      square=True,
-      linewidths=.5,
-      cbar_kws={"shrink": .5})
-  fig.savefig(
-      FLAGS.plot_dir + "/correlations.pdf",
-      dpi=500,
-      format="pdf",
-      bbox_inches="tight")
+    # Generate a custom diverging colormap
+    cmap = sns.diverging_palette(220, 10, as_cmap=True)
 
-  print("Plotting hierarchical relations...")
-  z = linkage(
-      pdist(ratings.T, metric="correlation"),
-      method="ward",
-      optimal_ordering=True)
-  fig = plt.figure(figsize=(11, 4), dpi=400)
-  plt.xlabel("")
-  plt.ylabel("")
-  dendrogram(
-      z,
-      labels=ratings.columns,
-      leaf_rotation=90.,  # rotates the x axis labels
-      leaf_font_size=12,  # font size for the x axis labels
-      color_threshold=1.05,
-  )
-  fig.savefig(
-      FLAGS.plot_dir + "/hierarchical_clustering.pdf",
-      dpi=600,
-      format="pdf",
-      bbox_inches="tight")
+    # Draw the heatmap with the mask and correct aspect ratio
+    sns.heatmap(
+        corr,
+        mask=mask,
+        cmap=cmap,
+        vmax=0.3,
+        center=0,
+        square=True,
+        linewidths=0.5,
+        cbar_kws={"shrink": 0.5},
+    )
+    fig.savefig(FLAGS.plot_dir + "/correlations.pdf", dpi=500, format="pdf", bbox_inches="tight")
 
-  sent_color_map = {
-      "positive": "#BEECAF",
-      "negative": "#94bff5",
-      "ambiguous": "#FFFC9E"
-  }
-  with open(FLAGS.sentiment_dict) as f:
-    sent_dict = json.loads(f.read())
-  sent_colors = {}
-  for e in all_emotions:
-    if e in sent_dict["positive"]:
-      sent_colors[e] = sent_color_map["positive"]
-    elif e in sent_dict["negative"]:
-      sent_colors[e] = sent_color_map["negative"]
-    else:
-      sent_colors[e] = sent_color_map["ambiguous"]
+    print("Plotting hierarchical relations...")
+    z = linkage(pdist(ratings.T, metric="correlation"), method="ward", optimal_ordering=True)
+    fig = plt.figure(figsize=(11, 4), dpi=400)
+    plt.xlabel("")
+    plt.ylabel("")
+    dendrogram(
+        z,
+        labels=ratings.columns,
+        leaf_rotation=90.0,  # rotates the x axis labels
+        leaf_font_size=12,  # font size for the x axis labels
+        color_threshold=1.05,
+    )
+    fig.savefig(
+        FLAGS.plot_dir + "/hierarchical_clustering.pdf",
+        dpi=600,
+        format="pdf",
+        bbox_inches="tight",
+    )
 
-  # Generate a mask for the upper triangle
-  mask = np.zeros_like(corr, dtype=np.bool)
-  mask[np.diag_indices(mask.shape[0])] = True
+    sent_color_map = {
+        "positive": "#BEECAF",
+        "negative": "#94bff5",
+        "ambiguous": "#FFFC9E",
+    }
+    with open(FLAGS.sentiment_dict) as f:
+        sent_dict = json.loads(f.read())
+    sent_colors = {}
+    for e in all_emotions:
+        if e in sent_dict["positive"]:
+            sent_colors[e] = sent_color_map["positive"]
+        elif e in sent_dict["negative"]:
+            sent_colors[e] = sent_color_map["negative"]
+        else:
+            sent_colors[e] = sent_color_map["ambiguous"]
 
-  # Generate a custom diverging colormap
-  cmap = sns.diverging_palette(220, 10, as_cmap=True)
+    # Generate a mask for the upper triangle
+    mask = np.zeros_like(corr, dtype=np.bool)
+    mask[np.diag_indices(mask.shape[0])] = True
 
-  row_colors = pd.Series(
-      corr.columns, index=corr.columns, name="sentiment").map(sent_colors)
+    # Generate a custom diverging colormap
+    cmap = sns.diverging_palette(220, 10, as_cmap=True)
 
-  # Draw the heatmap with the mask and correct aspect ratio
-  g = sns.clustermap(
-      corr,
-      mask=mask,
-      cmap=cmap,
-      vmax=.3,
-      vmin=-0.3,
-      center=0,
-      row_linkage=z,
-      col_linkage=z,
-      col_colors=row_colors,
-      linewidths=.1,
-      cbar_kws={
-          "ticks": [-.3, -.15, 0, .15, .3],
-          "use_gridspec": False,
-          "orientation": "horizontal",
-      },
-      figsize=(10, 10))
+    row_colors = pd.Series(corr.columns, index=corr.columns, name="sentiment").map(sent_colors)
 
-  g.ax_row_dendrogram.set_visible(False)
-  g.cax.set_position([.34, -0.05, .5, .03])
+    # Draw the heatmap with the mask and correct aspect ratio
+    g = sns.clustermap(
+        corr,
+        mask=mask,
+        cmap=cmap,
+        vmax=0.3,
+        vmin=-0.3,
+        center=0,
+        row_linkage=z,
+        col_linkage=z,
+        col_colors=row_colors,
+        linewidths=0.1,
+        cbar_kws={
+            "ticks": [-0.3, -0.15, 0, 0.15, 0.3],
+            "use_gridspec": False,
+            "orientation": "horizontal",
+        },
+        figsize=(10, 10),
+    )
 
-  for label in sent_color_map:
-    g.ax_col_dendrogram.bar(
-        0, 0, color=sent_color_map[label], label=label, linewidth=0)
+    g.ax_row_dendrogram.set_visible(False)
+    g.cax.set_position([0.34, -0.05, 0.5, 0.03])
 
-  g.ax_col_dendrogram.legend(
-      title="Sentiment", loc="center", bbox_to_anchor=(1.1, .5))
+    for label in sent_color_map:
+        g.ax_col_dendrogram.bar(0, 0, color=sent_color_map[label], label=label, linewidth=0)
 
-  g.savefig(FLAGS.plot_dir + "/hierarchical_corr.pdf", dpi=600, format="pdf")
+    g.ax_col_dendrogram.legend(title="Sentiment", loc="center", bbox_to_anchor=(1.1, 0.5))
 
-  print("Calculating agreements...")
-  unique_labels = data.groupby("id").apply(CheckAgreement, 1,
-                                           all_emotions_neutral).to_dict()
-  data["unique_labels"] = data["id"].map(unique_labels)
-  agree_dict_2 = data.groupby("id").apply(CheckAgreement, 2,
-                                          all_emotions_neutral).to_dict()
-  data["agree_2"] = data["id"].map(agree_dict_2)
-  agree_dict = data.groupby("id").apply(CheckAgreement, 3,
-                                        all_emotions_neutral).to_dict()
-  data["agree_3"] = data["id"].map(agree_dict)
-  agree_dict = data.groupby("id").apply(CheckAgreement, 1, all_emotions_neutral,
-                                        1).to_dict()
-  data["no_agree"] = data["id"].map(agree_dict)
+    g.savefig(FLAGS.plot_dir + "/hierarchical_corr.pdf", dpi=600, format="pdf")
 
-  filtered_2 = data[data["agree_2"].str.len() > 0]
-  print(
-      "%d (%d%%) of the examples have 2+ raters agreeing on at least one emotion label"
-      % (len(filtered_2["id"].unique()), (len(filtered_2) / len(data) * 100)))
+    print("Calculating agreements...")
+    unique_labels = data.groupby("id").apply(CheckAgreement, 1, all_emotions_neutral).to_dict()
+    data["unique_labels"] = data["id"].map(unique_labels)
+    agree_dict_2 = data.groupby("id").apply(CheckAgreement, 2, all_emotions_neutral).to_dict()
+    data["agree_2"] = data["id"].map(agree_dict_2)
+    agree_dict = data.groupby("id").apply(CheckAgreement, 3, all_emotions_neutral).to_dict()
+    data["agree_3"] = data["id"].map(agree_dict)
+    agree_dict = data.groupby("id").apply(CheckAgreement, 1, all_emotions_neutral, 1).to_dict()
+    data["no_agree"] = data["id"].map(agree_dict)
 
-  filtered_3 = data[data["agree_3"].str.len() > 0]
-  print(
-      "%d (%d%%) of the examples have 3+ raters agreeing on at least one emotion label"
-      % (len(filtered_3["id"].unique()), (len(filtered_3) / len(data) * 100)))
+    filtered_2 = data[data["agree_2"].str.len() > 0]
+    print(
+        "%d (%d%%) of the examples have 2+ raters agreeing on at least one emotion label"
+        % (len(filtered_2["id"].unique()), (len(filtered_2) / len(data) * 100))
+    )
 
-  print("Plotting number of labels...")
-  data["num_unique_prefilter"] = data["unique_labels"].apply(CountLabels)
-  data["num_unique_postfilter"] = data["agree_2"].apply(CountLabels)
-  unique_ex = data.drop_duplicates("id")
-  df = pd.DataFrame({
-      "count":
-          unique_ex["num_unique_prefilter"].tolist() +
-          unique_ex["num_unique_postfilter"].tolist(),
-      "type": ["pre-filter"] * len(unique_ex) + ["post-filter"] * len(unique_ex)
-  })
+    filtered_3 = data[data["agree_3"].str.len() > 0]
+    print(
+        "%d (%d%%) of the examples have 3+ raters agreeing on at least one emotion label"
+        % (len(filtered_3["id"].unique()), (len(filtered_3) / len(data) * 100))
+    )
 
-  fig = plt.figure(dpi=600)
-  ax = sns.countplot(
-      data=df, x="count", hue="type", palette=["skyblue", "navy"])
-  plt.xlim(-.5, 7.5)
-  plt.legend(loc="center right", fontsize="x-large")
-  plt.ylabel("Number of Examples", fontsize="x-large")
-  plt.xlabel("Number of Labels", fontsize="x-large")
-  plt.draw()
-  labels = [item.get_text() for item in ax.get_yticklabels()]
-  ax.set_yticklabels(["%dk" % (int(int(label) / 1000)) for label in labels])
-  plt.tight_layout()
+    print("Plotting number of labels...")
+    data["num_unique_prefilter"] = data["unique_labels"].apply(CountLabels)
+    data["num_unique_postfilter"] = data["agree_2"].apply(CountLabels)
+    unique_ex = data.drop_duplicates("id")
+    df = pd.DataFrame(
+        {
+            "count": unique_ex["num_unique_prefilter"].tolist()
+            + unique_ex["num_unique_postfilter"].tolist(),
+            "type": ["pre-filter"] * len(unique_ex) + ["post-filter"] * len(unique_ex),
+        }
+    )
 
-  fig.savefig(
-      FLAGS.plot_dir + "/number_of_labels.pdf",
-      dpi=600,
-      format="pdf",
-      bbox_inches="tight")
+    fig = plt.figure(dpi=600)
+    ax = sns.countplot(data=df, x="count", hue="type", palette=["skyblue", "navy"])
+    plt.xlim(-0.5, 7.5)
+    plt.legend(loc="center right", fontsize="x-large")
+    plt.ylabel("Number of Examples", fontsize="x-large")
+    plt.xlabel("Number of Labels", fontsize="x-large")
+    plt.draw()
+    labels = [item.get_text() for item in ax.get_yticklabels()]
+    ax.set_yticklabels(["%dk" % (int(int(label) / 1000)) for label in labels])
+    plt.tight_layout()
 
-  print("Proportion of agreement per label:")
-  print(
-      filtered_2[all_emotions_neutral].sum(axis=0).sort_values(ascending=False)
-      / len(data))
+    fig.savefig(
+        FLAGS.plot_dir + "/number_of_labels.pdf",
+        dpi=600,
+        format="pdf",
+        bbox_inches="tight",
+    )
+
+    print("Proportion of agreement per label:")
+    print(filtered_2[all_emotions_neutral].sum(axis=0).sort_values(ascending=False) / len(data))
 
 
 if __name__ == "__main__":
-  app.run(main)
+    app.run(main)

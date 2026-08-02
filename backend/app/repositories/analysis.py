@@ -22,7 +22,9 @@ class MoodAnalysisRepository(Repository[MoodAnalysis]):
         status: AnalysisStatus | None = None,
         risk_level: RiskLevel | None = None,
     ) -> Select[tuple[MoodAnalysis]]:
-        statement = self._base_select(include_deleted=include_deleted).where(MoodAnalysis.user_id == user_id)
+        statement = self._base_select(include_deleted=include_deleted).where(
+            MoodAnalysis.user_id == user_id
+        )
         if input_type is not None:
             statement = statement.where(MoodAnalysis.input_type == input_type)
         if status is not None:
@@ -38,7 +40,11 @@ class MoodAnalysisRepository(Repository[MoodAnalysis]):
         *,
         include_deleted: bool = False,
     ) -> MoodAnalysis | None:
-        statement = self.scoped_select(user_id, include_deleted=include_deleted).where(MoodAnalysis.id == analysis_id).limit(1)
+        statement = (
+            self.scoped_select(user_id, include_deleted=include_deleted)
+            .where(MoodAnalysis.id == analysis_id)
+            .limit(1)
+        )
         try:
             return (await self.session.scalars(statement)).first()
         except SQLAlchemyError as exc:

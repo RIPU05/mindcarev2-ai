@@ -48,5 +48,7 @@ def get_assistant_conversation_repository(
     return AssistantConversationRepository(session)
 
 
-def get_assistant_message_repository(session: DatabaseSession) -> AssistantMessageRepository:
+def get_assistant_message_repository(
+    session: DatabaseSession,
+) -> AssistantMessageRepository:
     return AssistantMessageRepository(session)

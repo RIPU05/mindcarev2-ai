@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 from datetime import date
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 from sqlalchemy import Date, Enum, Float, ForeignKey, Index, Integer, String, Text
@@ -7,6 +10,10 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, SoftDeleteMixin, TimestampMixin, UUIDPrimaryKeyMixin
 from app.schemas.enums import AnalysisInputType, AnalysisStatus, RiskLevel, StreakType
+
+if TYPE_CHECKING:
+    from app.models.journal import JournalEntry
+    from app.models.users import User
 
 
 class MoodAnalysis(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):

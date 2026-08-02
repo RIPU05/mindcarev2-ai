@@ -21,5 +21,4 @@ ignore = ["B008", "E501", "B009", "B010"]
 [tool.ruff.lint.isort]
 known-first-party = ["app"]
 
-[tool.ruff.lint.per-file-ignores]
-"backend/app/models/*" = ["F821"]
+

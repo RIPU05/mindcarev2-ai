@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 from sqlalchemy import Enum, ForeignKey, Index, String, Text
@@ -6,6 +9,9 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, SoftDeleteMixin, TimestampMixin, UUIDPrimaryKeyMixin
 from app.schemas.enums import AssistantRole, ConversationStatus
+
+if TYPE_CHECKING:
+    from app.models.users import User
 
 
 class AssistantConversation(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):

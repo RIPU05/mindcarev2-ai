@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 from datetime import datetime
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Index, String, Text
@@ -7,6 +10,11 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, SoftDeleteMixin, TimestampMixin, UUIDPrimaryKeyMixin
 from app.schemas.enums import UserStatus
+
+if TYPE_CHECKING:
+    from app.models.analysis import MoodAnalysis, MoodStreak
+    from app.models.assistant import AssistantConversation
+    from app.models.journal import JournalEntry
 
 
 class User(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):

@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 from sqlalchemy import Enum, ForeignKey, Index, Integer, String, Text
@@ -6,6 +9,10 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, SoftDeleteMixin, TimestampMixin, UUIDPrimaryKeyMixin
 from app.schemas.enums import JournalSource
+
+if TYPE_CHECKING:
+    from app.models.analysis import MoodAnalysis
+    from app.models.users import User
 
 
 class JournalEntry(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):

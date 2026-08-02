@@ -113,17 +113,29 @@ export function AppFrame({
         ) : null}
 
         <div className="min-w-0 flex-1">
-          <header className="flex flex-wrap items-end justify-between gap-3 border-b border-border/60 px-5 py-4 sm:px-7">
-            <div>
-              <h3 className="font-display text-lg leading-tight sm:text-xl">{title}</h3>
+          {/* On small screens the rail collapses into a single quiet chip. */}
+          {rail ? (
+            <p className="flex items-center gap-2 border-b border-border/60 px-5 py-2.5 text-[0.66rem] uppercase tracking-[0.18em] text-muted-foreground sm:hidden">
+              <span aria-hidden className="size-1.5 rounded-full bg-primary" />
+              {navItems.find((i) => i.key === active)?.label}
+            </p>
+          ) : null}
+          <header className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3 border-b border-border/60 px-5 py-4 sm:flex sm:flex-wrap sm:justify-between sm:px-7">
+            <div className="min-w-0">
+              <h3 className="font-display text-[1.05rem] leading-tight sm:text-xl">
+                {title}
+              </h3>
               {subtitle ? (
-                <p className="mt-1 text-[0.78rem] text-muted-foreground">{subtitle}</p>
+                <p className="mt-1 text-[0.76rem] leading-relaxed text-muted-foreground">
+                  {subtitle}
+                </p>
               ) : null}
             </div>
             {action}
           </header>
           <div className="px-5 py-6 sm:px-7 sm:py-7">{children}</div>
         </div>
+
       </div>
     </motion.div>
   );

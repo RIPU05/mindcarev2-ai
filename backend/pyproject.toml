@@ -38,8 +38,7 @@ include = '\.py$'
 
 [tool.isort]
 profile = "black"
-line-length = 100
-multi_line_output = 3
+line_length = 100
 
 [tool.mypy]
 python_version = "3.12"

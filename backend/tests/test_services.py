@@ -3,7 +3,6 @@ from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
 import pytest
-
 from app.ai.types import AIResponse, TokenUsage
 from app.models.analysis import MoodAnalysis
 from app.models.assistant import AssistantMessage

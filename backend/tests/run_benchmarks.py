@@ -4,9 +4,6 @@ import time
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.ext.compiler import compiles
-
 # Import all models to ensure they register on Base.metadata
 import app.models.analysis  # noqa: F401
 import app.models.assistant  # noqa: F401
@@ -17,6 +14,8 @@ from app.db.base import Base
 from app.models.journal import JournalEntry
 from app.rag.types import SearchQuery
 from app.schemas.enums import JournalSource
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.compiler import compiles
 
 try:
     from sqlalchemy.dialects.postgresql import JSONB

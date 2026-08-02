@@ -3,20 +3,19 @@ import warnings
 from typing import AsyncGenerator
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
-from httpx import ASGITransport, AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.ext.compiler import compiles
-from starlette.middleware.trustedhost import TrustedHostMiddleware
-
 # Import all models to ensure they register on Base.metadata
 import app.models.analysis  # noqa: F401
 import app.models.assistant  # noqa: F401
 import app.models.journal  # noqa: F401
 import app.models.users  # noqa: F401
+import pytest
 from app.ai.types import AIResponse, ProviderHealthCheck, TokenUsage
 from app.db.base import Base
 from app.main import app
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.compiler import compiles
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 warnings.filterwarnings("ignore", message=".*garbage collector.*")
 warnings.filterwarnings("ignore", category=DeprecationWarning)

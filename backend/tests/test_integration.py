@@ -2,10 +2,9 @@ import uuid
 from unittest.mock import AsyncMock, patch
 
 import pytest
-from httpx import AsyncClient
-
 from app.auth.dependencies import get_current_user
 from app.models.users import User
+from httpx import AsyncClient
 
 
 @pytest.fixture
@@ -334,3 +333,66 @@ async def test_moods_endpoints(client: AsyncClient):
     data = response.json()
     assert "items" in data
     assert "total" in data
+
+
+# 9. Extended Assistant and Analysis GET Endpoints
+@pytest.mark.anyio
+async def test_extended_mood_analysis_fields(client: AsyncClient):
+    payload = {"text": "I feel very anxious about tomorrow's exam."}
+    response = await client.post("/api/v1/analysis/text", json=payload)
+    assert response.status_code in [200, 202]
+    data = response.json()
+    assert "reflection" in data
+    assert "summary" in data
+    assert "themes" in data
+    assert "suggestions" in data
+    assert "follow_up_questions" in data
+    assert isinstance(data["themes"], list)
+    assert isinstance(data["suggestions"], list)
+    assert isinstance(data["follow_up_questions"], list)
+
+
+@pytest.mark.anyio
+async def test_assistant_get_endpoints(client: AsyncClient):
+    # First, generate a chat conversation
+    chat_payload = {"message": "Let's start a test conversation"}
+    chat_response = await client.post("/api/v1/assistant/chat", json=chat_payload)
+    assert chat_response.status_code == 200
+    chat_data = chat_response.json()
+    conv_id = chat_data["conversation_id"]
+
+    # 1. GET /api/v1/assistant/conversations (List conversations)
+    list_response = await client.get("/api/v1/assistant/conversations")
+    assert list_response.status_code == 200
+    list_data = list_response.json()
+    assert "items" in list_data
+    assert "total" in list_data
+    assert list_data["total"] >= 1
+    assert any(item["id"] == conv_id for item in list_data["items"])
+
+    # 2. GET /api/v1/assistant/conversations/{conversation_id} (Get conversation details)
+    get_response = await client.get(f"/api/v1/assistant/conversations/{conv_id}")
+    assert get_response.status_code == 200
+    get_data = get_response.json()
+    assert get_data["id"] == conv_id
+    assert "title" in get_data
+    assert "status" in get_data
+
+    # 3. GET /api/v1/assistant/conversations/{conversation_id}/messages (Get message history)
+    msg_response = await client.get(f"/api/v1/assistant/conversations/{conv_id}/messages")
+    assert msg_response.status_code == 200
+    msg_data = msg_response.json()
+    assert "items" in msg_data
+    assert "total" in msg_data
+    assert msg_data["total"] >= 2  # User message and assistant response
+    assert msg_data["items"][0]["role"] == "user"
+    assert msg_data["items"][1]["role"] == "assistant"
+
+    # 4. GET conversation 404 check
+    fake_id = uuid.uuid4()
+    bad_response = await client.get(f"/api/v1/assistant/conversations/{fake_id}")
+    assert bad_response.status_code == 404
+
+    # 5. GET messages 404 check
+    bad_msg_response = await client.get(f"/api/v1/assistant/conversations/{fake_id}/messages")
+    assert bad_msg_response.status_code == 404

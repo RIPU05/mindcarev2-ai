@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import Select
+from sqlalchemy import Select, func, select
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.db.errors import translate_database_error
@@ -61,6 +61,21 @@ class AssistantConversationRepository(Repository[AssistantConversation]):
         except SQLAlchemyError as exc:
             raise translate_database_error(exc) from exc
 
+    async def count_for_user(
+        self,
+        user_id: UUID,
+        *,
+        include_deleted: bool = False,
+        status: ConversationStatus | None = None,
+    ) -> int:
+        statement = select(func.count()).select_from(
+            self.scoped_select(user_id, include_deleted=include_deleted, status=status).subquery()
+        )
+        try:
+            return int(await self.session.scalar(statement) or 0)
+        except SQLAlchemyError as exc:
+            raise translate_database_error(exc) from exc
+
 
 class AssistantMessageRepository(Repository[AssistantMessage]):
     model = AssistantMessage
@@ -81,6 +96,24 @@ class AssistantMessageRepository(Repository[AssistantMessage]):
         statement = self._apply_pagination(statement, pagination)
         try:
             return list(await self.session.scalars(statement))
+        except SQLAlchemyError as exc:
+            raise translate_database_error(exc) from exc
+
+    async def count_for_conversation(
+        self,
+        conversation_id: UUID,
+        *,
+        include_deleted: bool = False,
+        role: AssistantRole | None = None,
+    ) -> int:
+        query = self._base_select(include_deleted=include_deleted).where(
+            AssistantMessage.conversation_id == conversation_id
+        )
+        if role is not None:
+            query = query.where(AssistantMessage.role == role)
+        statement = select(func.count()).select_from(query.subquery())
+        try:
+            return int(await self.session.scalar(statement) or 0)
         except SQLAlchemyError as exc:
             raise translate_database_error(exc) from exc
 

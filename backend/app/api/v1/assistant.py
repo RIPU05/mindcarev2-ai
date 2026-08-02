@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends
+from uuid import UUID
+
+from fastapi import APIRouter, Depends, Query
 
 from app.auth.dependencies import get_current_user
 from app.db.uow import UnitOfWork
@@ -7,10 +9,18 @@ from app.models.assistant import AssistantConversation, AssistantMessage
 from app.models.users import User
 from app.repositories.assistant import AssistantConversationRepository, AssistantMessageRepository
 from app.repositories.journal import JournalRepository
-from app.schemas.assistant import AssistantChatRequest, AssistantChatResponse
+from app.schemas.assistant import (
+    AssistantChatRequest,
+    AssistantChatResponse,
+    AssistantConversationListResponse,
+    AssistantConversationResponse,
+    AssistantMessageListResponse,
+    AssistantMessageResponse,
+)
 from app.schemas.common import ErrorResponse
-from app.schemas.enums import AssistantRole
+from app.schemas.enums import AssistantRole, ConversationStatus
 from app.services.ai_json import parse_json_object
+from app.utils.pagination import PaginationParams
 
 router = APIRouter(
     prefix="/assistant", tags=["assistant"], dependencies=[Depends(get_current_user)]
@@ -209,4 +219,143 @@ async def chat(
             content=assistant_message.content,
             ai_metadata=ai_meta,
             created_at=assistant_message.created_at,
+        )
+
+
+@router.get(
+    "/conversations",
+    response_model=AssistantConversationListResponse,
+    status_code=200,
+    responses=ERROR_RESPONSES,
+)
+async def list_conversations(
+    current_user: User = Depends(get_current_user),
+    limit: int = Query(default=50, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+    sort_by: str = Query(default="created_at", min_length=1, max_length=80),
+    sort_direction: str = Query(default="desc", pattern="^(asc|desc)$"),
+    status: ConversationStatus | None = None,
+    include_deleted: bool = False,
+) -> AssistantConversationListResponse:
+    async with UnitOfWork() as uow:
+        conversations = AssistantConversationRepository(uow.session)
+        items = await conversations.list_for_user(
+            current_user.id,
+            pagination=PaginationParams(
+                limit=limit,
+                offset=offset,
+                sort_by=sort_by,
+                sort_direction=sort_direction,
+            ),
+            include_deleted=include_deleted,
+            status=status,
+        )
+        total = await conversations.count_for_user(
+            current_user.id,
+            include_deleted=include_deleted,
+            status=status,
+        )
+        return AssistantConversationListResponse(
+            items=[
+                AssistantConversationResponse(
+                    id=c.id,
+                    title=c.title,
+                    status=c.status,
+                    context=c.context or {},
+                    created_at=c.created_at,
+                    updated_at=c.updated_at,
+                )
+                for c in items
+            ],
+            total=total,
+        )
+
+
+@router.get(
+    "/conversations/{conversation_id}",
+    response_model=AssistantConversationResponse,
+    status_code=200,
+    responses=ERROR_RESPONSES,
+)
+async def get_conversation(
+    conversation_id: UUID,
+    current_user: User = Depends(get_current_user),
+    include_deleted: bool = False,
+) -> AssistantConversationResponse:
+    async with UnitOfWork() as uow:
+        conversations = AssistantConversationRepository(uow.session)
+        conversation = await conversations.get_for_user(
+            current_user.id,
+            conversation_id,
+            include_deleted=include_deleted,
+        )
+        if conversation is None:
+            raise NotFoundException("Assistant conversation was not found.")
+        return AssistantConversationResponse(
+            id=conversation.id,
+            title=conversation.title,
+            status=conversation.status,
+            context=conversation.context or {},
+            created_at=conversation.created_at,
+            updated_at=conversation.updated_at,
+        )
+
+
+@router.get(
+    "/conversations/{conversation_id}/messages",
+    response_model=AssistantMessageListResponse,
+    status_code=200,
+    responses=ERROR_RESPONSES,
+)
+async def list_messages(
+    conversation_id: UUID,
+    current_user: User = Depends(get_current_user),
+    limit: int = Query(default=50, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+    sort_by: str = Query(default="created_at", min_length=1, max_length=80),
+    sort_direction: str = Query(default="asc", pattern="^(asc|desc)$"),
+    role: AssistantRole | None = None,
+    include_deleted: bool = False,
+) -> AssistantMessageListResponse:
+    async with UnitOfWork() as uow:
+        conversations = AssistantConversationRepository(uow.session)
+        conversation = await conversations.get_for_user(
+            current_user.id,
+            conversation_id,
+            include_deleted=include_deleted,
+        )
+        if conversation is None:
+            raise NotFoundException("Assistant conversation was not found.")
+
+        messages = AssistantMessageRepository(uow.session)
+        items = await messages.list_for_conversation(
+            conversation_id,
+            pagination=PaginationParams(
+                limit=limit,
+                offset=offset,
+                sort_by=sort_by,
+                sort_direction=sort_direction,
+            ),
+            include_deleted=include_deleted,
+            role=role,
+        )
+        total = await messages.count_for_conversation(
+            conversation_id,
+            include_deleted=include_deleted,
+            role=role,
+        )
+        return AssistantMessageListResponse(
+            items=[
+                AssistantMessageResponse(
+                    id=m.id,
+                    conversation_id=m.conversation_id,
+                    role=m.role,
+                    content=m.content,
+                    message_metadata=m.message_metadata or {},
+                    created_at=m.created_at,
+                    updated_at=m.updated_at,
+                )
+                for m in items
+            ],
+            total=total,
         )

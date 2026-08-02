@@ -276,4 +276,9 @@ def analysis_response(analysis: MoodAnalysis) -> MoodAnalysisResponse:
         started_at=metadata.get("processing_started_at"),
         completed_at=metadata.get("processing_completed_at"),
         created_at=analysis.created_at,
+        summary=metadata.get("summary"),
+        themes=metadata.get("themes") or [],
+        reflection=metadata.get("reflection"),
+        suggestions=metadata.get("suggestions") or [],
+        follow_up_questions=metadata.get("follow_up_questions") or [],
     )

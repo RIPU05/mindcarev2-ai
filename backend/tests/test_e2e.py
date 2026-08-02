@@ -2,14 +2,13 @@ from unittest.mock import AsyncMock, patch
 from uuid import UUID
 
 import pytest
-from httpx import AsyncClient
-from sqlalchemy import select
-
 from app.models.analysis import MoodAnalysis
 from app.models.assistant import AssistantMessage
 from app.models.journal import JournalEntry
 from app.models.users import User
 from app.rag.types import RetrievalSource
+from httpx import AsyncClient
+from sqlalchemy import select
 
 
 @pytest.mark.anyio

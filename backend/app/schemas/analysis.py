@@ -38,6 +38,11 @@ class MoodAnalysisResponse(ApiSchema):
     started_at: datetime | None = None
     completed_at: datetime | None = None
     created_at: datetime
+    summary: str | None = None
+    themes: list[str] | None = Field(default_factory=list)
+    reflection: str | None = None
+    suggestions: list[str] | None = Field(default_factory=list)
+    follow_up_questions: list[str] | None = Field(default_factory=list)
 
     @classmethod
     def mock(cls, input_type: str) -> "MoodAnalysisResponse":

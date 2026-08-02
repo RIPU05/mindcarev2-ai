@@ -1,14 +1,13 @@
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from fastapi import HTTPException, Request
-
 from app.ai.providers.reliable import CircuitBreaker, ReliableAIProviderWrapper
 from app.ai.types import AIResponse, TokenUsage
 from app.auth.hashing import hash_password, verify_password
 from app.auth.rate_limiter import AuthRateLimiter
 from app.rag.embeddings import InMemoryEmbeddingCache
 from app.services.ai_json import retry_on_json_error
+from fastapi import HTTPException, Request
 
 
 # 1. Hashing Test

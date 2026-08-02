@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.ai import get_ai_provider

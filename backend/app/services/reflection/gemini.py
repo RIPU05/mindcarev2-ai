@@ -10,8 +10,9 @@ class GeminiReflectionGenerationService(ReflectionGenerationService):
 
     async def generate(self, payload: ReflectionInput) -> ReflectionResult:
         import time
-        from app.core.telemetry import tracer
+
         from app.core.metrics import REFLECTION_GENERATION_DURATION_SECONDS
+        from app.core.telemetry import tracer
 
         started = time.perf_counter()
         with tracer.start_as_current_span("reflection_generation") as span:

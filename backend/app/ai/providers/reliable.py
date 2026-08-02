@@ -172,14 +172,14 @@ class ReliableAIProviderWrapper(AIProvider):
 
         last_error = None
 
-        from app.core.telemetry import tracer
         from app.core.metrics import (
+            AI_ERRORS_TOTAL,
+            AI_ESTIMATED_COST_USD,
+            AI_FAILOVERS_TOTAL,
             AI_REQUEST_DURATION_SECONDS,
             AI_TOKEN_USAGE_TOTAL,
-            AI_ERRORS_TOTAL,
-            AI_FAILOVERS_TOTAL,
-            AI_ESTIMATED_COST_USD,
         )
+        from app.core.telemetry import tracer
 
         with tracer.start_as_current_span(f"ai_provider.{method_name}") as span:
             span.set_attribute("ai.method", method_name)

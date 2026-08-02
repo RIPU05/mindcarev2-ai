@@ -7,8 +7,7 @@ from anyio import to_thread
 from jwt import ExpiredSignatureError, InvalidTokenError, PyJWKClient
 
 from app.auth.config import SupabaseAuthConfig, get_supabase_auth_config
-from app.exceptions import ExpiredTokenException, InvalidTokenException
-from app.exceptions import AuthenticationException
+from app.exceptions import AuthenticationException, ExpiredTokenException, InvalidTokenException
 
 
 class SupabaseAuthClient:

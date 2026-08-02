@@ -76,7 +76,7 @@ async def analyze_text(
             )
 
             from app.rag.factory import get_rag_components
-            from app.rag.types import SearchQuery, RetrievalSource
+            from app.rag.types import RetrievalSource, SearchQuery
 
             rag_context_str = ""
             try:
@@ -149,6 +149,7 @@ async def analyze_text(
             }
             if reflection.reflection:
                 import asyncio
+
                 from app.rag.embeddings import generate_and_store_embedding
                 from app.rag.types import RetrievalSource
 

@@ -1,9 +1,9 @@
 import time
 import uuid
 
+from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.gzip import GZipMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
-from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
 
@@ -39,9 +39,9 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
         request.state.request_id = request_id
 
         from app.core.metrics import (
-            metrics_registry,
-            HTTP_REQUESTS_TOTAL,
             HTTP_REQUEST_DURATION_SECONDS,
+            HTTP_REQUESTS_TOTAL,
+            metrics_registry,
         )
 
         start = time.perf_counter()

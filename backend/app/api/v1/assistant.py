@@ -73,8 +73,9 @@ async def chat(
             )
         )
         import time
+
         from app.rag.factory import get_rag_components
-        from app.rag.types import SearchQuery, RetrievalSource
+        from app.rag.types import RetrievalSource, SearchQuery
 
         start_time = time.perf_counter()
 
@@ -154,6 +155,7 @@ async def chat(
         await uow.commit()
 
         import asyncio
+
         from app.rag.embeddings import generate_and_store_embedding
         from app.rag.types import RetrievalSource
 

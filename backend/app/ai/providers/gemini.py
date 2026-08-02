@@ -9,8 +9,8 @@ from app.ai.prompts import (
     reflection_prompt,
     summary_prompt,
 )
-from app.ai.providers.http import JsonHttpAIClient
 from app.ai.providers.base import AIProvider
+from app.ai.providers.http import JsonHttpAIClient
 from app.ai.types import AIResponse, ProviderHealthCheck, RetryPolicy, TokenUsage
 from app.core.config import settings
 from app.core.logging import get_logger

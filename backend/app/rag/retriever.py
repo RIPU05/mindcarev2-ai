@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from uuid import UUID
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.rag.types import RAGDocument, RetrievalSource, SearchQuery, SearchResult
@@ -204,8 +205,9 @@ class SqlCompositeRetriever(CompositeRetriever):
     async def retrieve(self, query: SearchQuery) -> list[SearchResult]:
         import logging
         import time
-        from app.core.telemetry import tracer
+
         from app.core.metrics import RAG_RETRIEVAL_DURATION_SECONDS
+        from app.core.telemetry import tracer
 
         logger = logging.getLogger(__name__)
 

@@ -82,8 +82,8 @@ def create_app() -> FastAPI:
     app.include_router(api_router, prefix=settings.api_prefix)
     app.include_router(api_router)
 
-    from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
     from fastapi import Response
+    from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
     @app.get("/metrics", tags=["health"])
     def prometheus_metrics():

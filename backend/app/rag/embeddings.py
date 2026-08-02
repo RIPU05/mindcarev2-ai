@@ -1,7 +1,8 @@
-from abc import ABC, abstractmethod
 import asyncio
 import logging
+from abc import ABC, abstractmethod
 from typing import Any
+
 import httpx
 
 from app.core.config import settings
@@ -211,12 +212,12 @@ async def generate_and_store_embedding(
     user_id: Any,
     metadata: dict[str, Any] | None = None,
 ) -> None:
-    from app.rag.factory import get_rag_components
-    from app.rag.types import EmbeddingRequest, VectorRecord, RAGDocument
-
     import time
-    from app.core.telemetry import tracer
+
     from app.core.metrics import EMBEDDING_GENERATION_DURATION_SECONDS
+    from app.core.telemetry import tracer
+    from app.rag.factory import get_rag_components
+    from app.rag.types import EmbeddingRequest, RAGDocument, VectorRecord
 
     try:
         with tracer.start_as_current_span("generate_and_store_embedding") as span:

@@ -48,6 +48,7 @@ async def create_journal_entry(
         await uow.commit()
 
         import asyncio
+
         from app.rag.embeddings import generate_and_store_embedding
         from app.rag.types import RetrievalSource
 
@@ -135,6 +136,7 @@ async def update_journal_entry(
         await uow.commit()
 
         import asyncio
+
         from app.rag.embeddings import generate_and_store_embedding
         from app.rag.types import RetrievalSource
 

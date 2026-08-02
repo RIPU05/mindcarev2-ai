@@ -83,15 +83,16 @@ export function AppFrame({
                     <span
                       aria-current={on ? "page" : undefined}
                       className={cn(
-                        "flex cursor-default items-center gap-2.5 rounded-xl px-3 py-2 text-[0.82rem] transition-colors duration-500",
+                        "flex cursor-default items-center gap-2.5 rounded-xl px-3 py-2 text-[0.82rem] transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]",
                         on
                           ? "bg-primary-soft text-primary"
-                          : "text-muted-foreground hover:bg-muted",
+                          : "text-muted-foreground hover:translate-x-0.5 hover:bg-muted hover:text-foreground",
                       )}
                     >
                       <Icon aria-hidden className="size-[15px]" strokeWidth={1.6} />
                       {item.label}
                     </span>
+
                   </li>
                 );
               })}

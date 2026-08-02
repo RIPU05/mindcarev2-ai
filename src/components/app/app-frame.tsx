@@ -138,8 +138,8 @@ export function Pill({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[0.68rem] tracking-wide",
-        tone === "muted" && "bg-muted text-muted-foreground",
+        "soft-press inline-flex cursor-default items-center gap-1.5 rounded-full px-2.5 py-1 text-[0.68rem] tracking-wide",
+        tone === "muted" && "bg-muted text-muted-foreground hover:bg-border/70",
         tone === "primary" && "bg-primary-soft text-primary",
         tone === "accent" && "bg-accent-soft text-accent",
       )}
@@ -147,4 +147,5 @@ export function Pill({
       {children}
     </span>
   );
+
 }

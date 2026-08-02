@@ -1,25 +1,22 @@
 import asyncio
-import time
-import math
 import statistics
-from uuid import uuid4
+import time
 from unittest.mock import AsyncMock, MagicMock, patch
+from uuid import uuid4
 
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.ext.compiler import compiles
-
-from app.db.base import Base
-from app.rag.factory import get_rag_components
-from app.rag.types import SearchQuery, RetrievalSource
-from app.ai.types import AIResponse, TokenUsage, ProviderHealthCheck
-from app.models.journal import JournalEntry
-from app.schemas.enums import JournalSource
 
 # Import all models to ensure they register on Base.metadata
 import app.models.analysis  # noqa: F401
 import app.models.assistant  # noqa: F401
 import app.models.journal  # noqa: F401
 import app.models.users  # noqa: F401
+from app.ai.types import AIResponse, ProviderHealthCheck, TokenUsage
+from app.db.base import Base
+from app.models.journal import JournalEntry
+from app.rag.types import SearchQuery
+from app.schemas.enums import JournalSource
 
 try:
     from sqlalchemy.dialects.postgresql import JSONB
@@ -27,6 +24,7 @@ try:
     @compiles(JSONB, "sqlite")
     def compile_jsonb_sqlite(element, compiler, **kw):
         return "JSON"
+
 except ImportError:
     pass
 
@@ -98,21 +96,22 @@ async def run_benchmarks():
     )
 
     # Setup RAG retrievers
-    from app.rag.retriever import SqlJournalRetriever, SqlCompositeRetriever
+    from app.rag.retriever import SqlCompositeRetriever, SqlJournalRetriever
+
     j_ret = SqlJournalRetriever(session)
     composite_retriever = SqlCompositeRetriever(retrievers=[j_ret], semantic_search=None)
 
     mock_embedding_provider = MagicMock()
-    mock_embedding_provider.embed_text = AsyncMock(
-        return_value=MagicMock(vector=[0.1] * 1536)
-    )
+    mock_embedding_provider.embed_text = AsyncMock(return_value=MagicMock(vector=[0.1] * 1536))
 
     # Setup AI Failover logic components
     from app.ai.providers.reliable import ReliableAIProviderWrapper
-    
+
     mock_failing_prov = MagicMock()
-    mock_failing_prov.generate_reflection = AsyncMock(side_effect=Exception("Failing Primary Provider"))
-    
+    mock_failing_prov.generate_reflection = AsyncMock(
+        side_effect=Exception("Failing Primary Provider")
+    )
+
     mock_succeeding_prov = MagicMock()
     mock_succeeding_prov.generate_reflection = AsyncMock(
         return_value=AIResponse(
@@ -124,14 +123,14 @@ async def run_benchmarks():
             token_usage=TokenUsage(10, 10, 20),
         )
     )
-    
+
     failover_wrapper = ReliableAIProviderWrapper(primary_provider_name="gemini")
-    
+
     def builder_map(name):
         if name == "gemini":
             return lambda: mock_failing_prov
         return lambda: mock_succeeding_prov
-        
+
     failover_wrapper.get_provider_builder = builder_map
 
     iterations = 30
@@ -158,30 +157,43 @@ async def run_benchmarks():
         # Embedding Latency
         t_start = time.perf_counter()
         from app.rag.types import EmbeddingRequest
-        await mock_embedding_provider.embed_text(EmbeddingRequest(text="Embed this benchmark sentence."))
+
+        await mock_embedding_provider.embed_text(
+            EmbeddingRequest(text="Embed this benchmark sentence.")
+        )
         latencies["Text Embedding Generation"].append((time.perf_counter() - t_start) * 1000.0)
 
         # AI Failover Latency
         t_start = time.perf_counter()
-        with patch("app.ai.providers.reliable.get_provider_priority_list", return_value=["gemini", "openai"]):
-            await failover_wrapper.generate_reflection("Benchmark failover text", context={"primary_mood": "sad"})
+        with patch(
+            "app.ai.providers.reliable.get_provider_priority_list",
+            return_value=["gemini", "openai"],
+        ):
+            await failover_wrapper.generate_reflection(
+                "Benchmark failover text", context={"primary_mood": "sad"}
+            )
         latencies["AI Provider Failover"].append((time.perf_counter() - t_start) * 1000.0)
 
     # Measure Concurrent Requests timings
     concurrent_latencies = []
+
     async def concurrent_task():
         t0 = time.perf_counter()
-        await mock_prov.generate_reflection("Concurrent request text", context={"primary_mood": "sad"})
+        await mock_prov.generate_reflection(
+            "Concurrent request text", context={"primary_mood": "sad"}
+        )
         return (time.perf_counter() - t0) * 1000.0
 
     for _ in range(5):
         t_start = time.perf_counter()
-        results = await asyncio.gather(*(concurrent_task() for _ in range(10)))
+        await asyncio.gather(*(concurrent_task() for _ in range(10)))
         concurrent_latencies.append((time.perf_counter() - t_start) * 1000.0)
 
     # 3. Print Results Report
     print(f"\nBenchmark results across {iterations} iterations:")
-    print(f"{'Metric':<30} | {'Mean (ms)':<10} | {'Min (ms)':<10} | {'Max (ms)':<10} | {'StdDev (ms)':<10}")
+    print(
+        f"{'Metric':<30} | {'Mean (ms)':<10} | {'Min (ms)':<10} | {'Max (ms)':<10} | {'StdDev (ms)':<10}"
+    )
     print("-" * 80)
 
     report_lines = []
@@ -192,11 +204,17 @@ async def run_benchmarks():
 
     for metric, values in latencies.items():
         mean_val, min_val, max_val, std_val = calculate_stats(values)
-        print(f"{metric:<30} | {mean_val:<10.2f} | {min_val:<10.2f} | {max_val:<10.2f} | {std_val:<10.2f}")
-        report_lines.append(f"| {metric} | {mean_val:.2f} | {min_val:.2f} | {max_val:.2f} | {std_val:.2f} |")
+        print(
+            f"{metric:<30} | {mean_val:<10.2f} | {min_val:<10.2f} | {max_val:<10.2f} | {std_val:<10.2f}"
+        )
+        report_lines.append(
+            f"| {metric} | {mean_val:.2f} | {min_val:.2f} | {max_val:.2f} | {std_val:.2f} |"
+        )
 
     c_mean, c_min, c_max, c_std = calculate_stats(concurrent_latencies)
-    print(f"{'10 Concurrent Requests Total':<30} | {c_mean:<10.2f} | {c_min:<10.2f} | {c_max:<10.2f} | {c_std:<10.2f}")
+    print(
+        f"{'10 Concurrent Requests Total':<30} | {c_mean:<10.2f} | {c_min:<10.2f} | {c_max:<10.2f} | {c_std:<10.2f}"
+    )
     report_lines.append("\n## Concurrency Load Benchmarks (10 Parallel Requests)\n")
     report_lines.append(f"- **Mean Duration**: {c_mean:.2f} ms")
     report_lines.append(f"- **Min Duration**: {c_min:.2f} ms")
@@ -214,6 +232,7 @@ async def run_benchmarks():
     await engine.dispose()
 
     import os
+
     if os.path.exists("./benchmark_temp.db"):
         try:
             os.remove("./benchmark_temp.db")

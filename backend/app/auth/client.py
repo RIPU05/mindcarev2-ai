@@ -78,7 +78,11 @@ class SupabaseAuthClient:
         return await self._auth_request(
             "POST",
             "/signup",
-            json={"email": email, "password": password, "data": {"display_name": display_name}},
+            json={
+                "email": email,
+                "password": password,
+                "data": {"display_name": display_name},
+            },
             use_anon_key=True,
         )
 

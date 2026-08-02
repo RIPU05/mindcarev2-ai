@@ -22,7 +22,8 @@ class OllamaProvider(AIProvider):
         self.model = settings.ollama_model
         self.base_url = settings.ollama_base_url.rstrip("/")
         self.retry_policy = RetryPolicy(
-            max_retries=max(settings.ai_max_retries, 0), timeout_seconds=settings.ai_timeout
+            max_retries=max(settings.ai_max_retries, 0),
+            timeout_seconds=settings.ai_timeout,
         )
 
     async def analyze_text(self, text: str, *, system_prompt: str | None = None) -> AIResponse:
@@ -104,5 +105,7 @@ class OllamaProvider(AIProvider):
             else None
         )
         return TokenUsage(
-            input_tokens=input_tokens, output_tokens=output_tokens, total_tokens=total_tokens
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            total_tokens=total_tokens,
         )

@@ -2,12 +2,12 @@ import asyncio
 from typing import NamedTuple
 
 from app.ai.providers.base import AIProvider
-from app.ai.types import AIResponse, TokenUsage, ProviderHealthCheck
-from app.services.safety.gemini import GeminiSafetyScreeningService
-from app.services.safety.types import SafetyInput
+from app.ai.types import AIResponse, ProviderHealthCheck, TokenUsage
+from app.schemas.enums import RiskLevel
 from app.services.emotion.gemini import GeminiEmotionAnalysisService
 from app.services.emotion.types import EmotionInput
-from app.schemas.enums import RiskLevel
+from app.services.safety.gemini import GeminiSafetyScreeningService
+from app.services.safety.types import SafetyInput
 
 
 class MockEvaluationAIProvider(AIProvider):
@@ -48,7 +48,7 @@ class MockEvaluationAIProvider(AIProvider):
             model=self.model,
             latency_ms=5,
             request_id="eval-req",
-            token_usage=TokenUsage(10, 10, 20)
+            token_usage=TokenUsage(10, 10, 20),
         )
 
     async def generate_reflection(self, text: str, *, context: dict | None = None) -> AIResponse:
@@ -58,7 +58,7 @@ class MockEvaluationAIProvider(AIProvider):
             model=self.model,
             latency_ms=5,
             request_id="eval-req",
-            token_usage=TokenUsage(10, 10, 20)
+            token_usage=TokenUsage(10, 10, 20),
         )
 
     async def summarize(self, text: str, *, context: dict | None = None) -> AIResponse:
@@ -68,25 +68,24 @@ class MockEvaluationAIProvider(AIProvider):
             model=self.model,
             latency_ms=5,
             request_id="eval-req",
-            token_usage=TokenUsage(10, 10, 20)
+            token_usage=TokenUsage(10, 10, 20),
         )
 
-    async def analyze_audio(self, audio_reference: str, *, context: dict | None = None) -> AIResponse:
+    async def analyze_audio(
+        self, audio_reference: str, *, context: dict | None = None
+    ) -> AIResponse:
         return AIResponse(
             content="{}",
             provider=self.name,
             model=self.model,
             latency_ms=5,
             request_id="eval-req",
-            token_usage=TokenUsage(10, 10, 20)
+            token_usage=TokenUsage(10, 10, 20),
         )
 
     async def health(self) -> ProviderHealthCheck:
         return ProviderHealthCheck(
-            provider=self.name,
-            model=self.model,
-            healthy=True,
-            latency_ms=10
+            provider=self.name, model=self.model, healthy=True, latency_ms=10
         )
 
 
@@ -175,7 +174,9 @@ async def run_evaluation():
         else:
             safety_tn += 1
 
-        print(f"Entry {idx + 1}: Mood correct? {is_mood_correct} | Escalation expected? {exp_esc} predicted? {pred_esc}")
+        print(
+            f"Entry {idx + 1}: Mood correct? {is_mood_correct} | Escalation expected? {exp_esc} predicted? {pred_esc}"
+        )
 
     # Calculations
     mood_accuracy = mood_correct / len(EVALUATION_DATASET)

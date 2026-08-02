@@ -33,7 +33,10 @@ ERROR_RESPONSES: dict[int | str, dict] = {
 
 
 @router.post(
-    "/text", response_model=MoodAnalysisResponse, status_code=200, responses=ERROR_RESPONSES
+    "/text",
+    response_model=MoodAnalysisResponse,
+    status_code=200,
+    responses=ERROR_RESPONSES,
 )
 async def analyze_text(
     payload: TextAnalysisRequest,
@@ -67,7 +70,7 @@ async def analyze_text(
             safety = await services.safety.screen(
                 {
                     "text": payload.text,
-                    "journal_id": str(payload.journal_id) if payload.journal_id else None,
+                    "journal_id": (str(payload.journal_id) if payload.journal_id else None),
                     "user_id": str(current_user.id),
                 }
             )
@@ -115,7 +118,7 @@ async def analyze_text(
 
             reflection = await services.reflection.generate(
                 {
-                    "journal_id": str(payload.journal_id) if payload.journal_id else None,
+                    "journal_id": (str(payload.journal_id) if payload.journal_id else None),
                     "analysis_id": str(analysis.id),
                     "text": payload.text,
                     "primary_mood": emotion.primary_mood,
@@ -180,7 +183,10 @@ async def analyze_text(
 
 
 @router.post(
-    "/audio", response_model=MoodAnalysisResponse, status_code=202, responses=ERROR_RESPONSES
+    "/audio",
+    response_model=MoodAnalysisResponse,
+    status_code=202,
+    responses=ERROR_RESPONSES,
 )
 async def analyze_audio(
     payload: AudioAnalysisRequest,
@@ -199,7 +205,9 @@ async def analyze_audio(
                 risk_level=RiskLevel.UNKNOWN,
                 emotion_scores={},
                 provider_metadata={
-                    "media_file_id": str(payload.media_file_id) if payload.media_file_id else None,
+                    "media_file_id": (
+                        str(payload.media_file_id) if payload.media_file_id else None
+                    ),
                     "audio_url": str(payload.audio_url) if payload.audio_url else None,
                     "upload_id": payload.upload_id,
                     "ai_pending": True,

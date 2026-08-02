@@ -95,7 +95,8 @@ class JsonHttpAIClient:
                 )
             except httpx.TimeoutException:
                 last_error = TimeoutError(
-                    f"{self.provider} request timed out.", details={"request_id": local_request_id}
+                    f"{self.provider} request timed out.",
+                    details={"request_id": local_request_id},
                 )
             except RateLimitError:
                 raise

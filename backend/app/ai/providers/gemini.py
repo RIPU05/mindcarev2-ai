@@ -55,7 +55,10 @@ class GeminiProvider(AIProvider):
             await self._generate(HEALTH_PROMPT)
             latency_ms = int((time.perf_counter() - started) * 1000)
             return ProviderHealthCheck(
-                provider=self.name, model=self.model, healthy=True, latency_ms=latency_ms
+                provider=self.name,
+                model=self.model,
+                healthy=True,
+                latency_ms=latency_ms,
             )
         except Exception as exc:
             latency_ms = int((time.perf_counter() - started) * 1000)
@@ -72,13 +75,16 @@ class GeminiProvider(AIProvider):
         params = {"key": self.api_key}
         payload = {
             "contents": [{"role": "user", "parts": [{"text": prompt}]}],
-            "generationConfig": {"temperature": 0.3, "responseMimeType": "application/json"},
+            "generationConfig": {
+                "temperature": 0.3,
+                "responseMimeType": "application/json",
+            },
         }
         client = JsonHttpAIClient(
             provider=self.name,
             model=self.model,
             retry_policy=self.retry_policy,
-            missing_config_message=None if self.api_key else "GEMINI_API_KEY is not configured.",
+            missing_config_message=(None if self.api_key else "GEMINI_API_KEY is not configured."),
         )
         return await client.post_json(
             url=url,

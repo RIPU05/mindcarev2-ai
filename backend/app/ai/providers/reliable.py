@@ -149,10 +149,18 @@ class ReliableAIProviderWrapper(AIProvider):
                 return await prov.health()
             except Exception as e:
                 return ProviderHealthCheck(
-                    provider=name, model="unknown", healthy=False, latency_ms=0, error=str(e)
+                    provider=name,
+                    model="unknown",
+                    healthy=False,
+                    latency_ms=0,
+                    error=str(e),
                 )
         return ProviderHealthCheck(
-            provider=name, model="unknown", healthy=False, latency_ms=0, error="Builder not found"
+            provider=name,
+            model="unknown",
+            healthy=False,
+            latency_ms=0,
+            error="Builder not found",
         )
 
     async def _execute_with_failover(self, method_name: str, *args, **kwargs) -> AIResponse:
@@ -233,15 +241,21 @@ class ReliableAIProviderWrapper(AIProvider):
                         )
 
                         AI_REQUEST_DURATION_SECONDS.labels(
-                            provider=response.provider, model=response.model, stage=method_name
+                            provider=response.provider,
+                            model=response.model,
+                            stage=method_name,
                         ).observe(duration_seconds)
 
                         AI_TOKEN_USAGE_TOTAL.labels(
-                            provider=response.provider, model=response.model, token_type="input"
+                            provider=response.provider,
+                            model=response.model,
+                            token_type="input",
                         ).inc(response.token_usage.input_tokens or 0)
 
                         AI_TOKEN_USAGE_TOTAL.labels(
-                            provider=response.provider, model=response.model, token_type="output"
+                            provider=response.provider,
+                            model=response.model,
+                            token_type="output",
                         ).inc(response.token_usage.output_tokens or 0)
 
                         if cost is not None:
@@ -279,7 +293,9 @@ class ReliableAIProviderWrapper(AIProvider):
                         last_error = exc
 
                         AI_ERRORS_TOTAL.labels(
-                            provider=provider_name, model="unknown", error_type="timeout"
+                            provider=provider_name,
+                            model="unknown",
+                            error_type="timeout",
                         ).inc()
 
                         logger.warning(
@@ -296,7 +312,9 @@ class ReliableAIProviderWrapper(AIProvider):
                         last_error = exc
 
                         AI_ERRORS_TOTAL.labels(
-                            provider=provider_name, model="unknown", error_type="exception"
+                            provider=provider_name,
+                            model="unknown",
+                            error_type="exception",
                         ).inc()
 
                         logger.warning(

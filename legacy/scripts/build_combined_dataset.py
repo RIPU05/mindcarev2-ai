@@ -30,7 +30,6 @@ from pathlib import Path
 
 import pandas as pd
 
-
 # ── Label mapping: GoEmotions emotion → unified MH label ──────────────────────
 GOEMOTIONS_TO_LABEL: dict[str, str] = {
     # Depression / low mood
@@ -82,6 +81,7 @@ def _clean(text: str) -> str:
 
 # ── Loader 1: Reddit depression dataset ───────────────────────────────────────
 
+
 def load_depression_dataset(path: str | Path) -> pd.DataFrame:
     path = Path(path)
     if not path.exists():
@@ -96,6 +96,7 @@ def load_depression_dataset(path: str | Path) -> pd.DataFrame:
 
 
 # ── Loader 2: GoEmotions ───────────────────────────────────────────────────────
+
 
 def load_goemotions(folder: str | Path) -> pd.DataFrame:
     folder = Path(folder)
@@ -129,7 +130,8 @@ def load_goemotions(folder: str | Path) -> pd.DataFrame:
     # Apply in reverse priority so lower-priority labels get overwritten.
     for priority_label in reversed(LABEL_PRIORITY):
         relevant_cols = [
-            c for c, lbl in GOEMOTIONS_TO_LABEL.items()
+            c
+            for c, lbl in GOEMOTIONS_TO_LABEL.items()
             if lbl == priority_label and c in emotion_cols
         ]
         if not relevant_cols:
@@ -145,6 +147,7 @@ def load_goemotions(folder: str | Path) -> pd.DataFrame:
 
 
 # ── Main pipeline ──────────────────────────────────────────────────────────────
+
 
 def main() -> None:
     out_dir = Path("data/processed")

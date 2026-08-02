@@ -201,7 +201,9 @@ class SqlConversationRetriever(ConversationRetriever):
 
 class SqlCompositeRetriever(CompositeRetriever):
     def __init__(
-        self, retrievers: list[Retriever], semantic_search: "SemanticSearchService" | None = None
+        self,
+        retrievers: list[Retriever],
+        semantic_search: "SemanticSearchService" | None = None,
     ) -> None:
         self.retrievers = retrievers
         self.semantic_search = semantic_search

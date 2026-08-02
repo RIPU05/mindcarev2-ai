@@ -18,7 +18,9 @@ ERROR_RESPONSES: dict[int | str, dict] = {
 
 
 @router.get("", response_model=ProfileResponse, status_code=200, responses=ERROR_RESPONSES)
-async def get_profile(current_user: User = Depends(get_current_user)) -> ProfileResponse:
+async def get_profile(
+    current_user: User = Depends(get_current_user),
+) -> ProfileResponse:
     async with UnitOfWork() as uow:
         profile = await ensure_profile(current_user, ProfileRepository(uow.session))
         await uow.commit()

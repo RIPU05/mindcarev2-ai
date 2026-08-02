@@ -57,6 +57,6 @@ class MoodAnalysisResponse(ApiSchema):
             emotions=[EmotionScore(label="neutral", score=0.0)],
             queued_at=now,
             started_at=now if normalized_input_type == AnalysisInputType.TEXT else None,
-            completed_at=now if normalized_input_type == AnalysisInputType.TEXT else None,
+            completed_at=(now if normalized_input_type == AnalysisInputType.TEXT else None),
             created_at=now,
         )

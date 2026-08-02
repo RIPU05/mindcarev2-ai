@@ -79,6 +79,7 @@ async def test_embedding_cache():
 @pytest.mark.anyio
 async def test_chunk_text():
     from app.rag.embeddings import chunk_text
+
     text = "a" * 1500
     chunks = chunk_text(text, max_chars=1000, overlap=200)
     assert len(chunks) == 2
@@ -89,12 +90,14 @@ async def test_chunk_text():
 @pytest.mark.anyio
 async def test_retry_async_exhausted():
     from app.rag.embeddings import retry_async
+
     calls = 0
+
     async def failing_func():
         nonlocal calls
         calls += 1
         raise ValueError("failing")
-    
+
     with pytest.raises(ValueError):
         await retry_async(failing_func, max_retries=2, initial_delay=0.01)
     assert calls == 2
@@ -102,24 +105,28 @@ async def test_retry_async_exhausted():
 
 @pytest.mark.anyio
 async def test_generate_and_store_embedding_error_logging():
+    from uuid import uuid4
+
     from app.rag.embeddings import generate_and_store_embedding
     from app.rag.types import RetrievalSource
-    from uuid import uuid4
+
     with patch("app.rag.factory.get_rag_components") as mock_get_rag:
         mock_get_rag.side_effect = Exception("failed to get components")
         await generate_and_store_embedding(
             text="hello",
             source=RetrievalSource.JOURNAL,
             document_id=uuid4(),
-            user_id=uuid4()
+            user_id=uuid4(),
         )
 
 
 @pytest.mark.anyio
 async def test_generate_and_store_embedding_missing_components():
+    from uuid import uuid4
+
     from app.rag.embeddings import generate_and_store_embedding
     from app.rag.types import RetrievalSource
-    from uuid import uuid4
+
     with patch("app.rag.factory.get_rag_components") as mock_get_rag:
         mock_components = MagicMock()
         mock_components.embedding_provider = None
@@ -129,9 +136,8 @@ async def test_generate_and_store_embedding_missing_components():
             text="hello",
             source=RetrievalSource.JOURNAL,
             document_id=uuid4(),
-            user_id=uuid4()
+            user_id=uuid4(),
         )
-
 
 
 # 6. Reliable Wrapper Test
@@ -219,8 +225,8 @@ async def test_ollama_embedding_provider():
 # 8. Concrete AI Providers Unit Tests
 @pytest.mark.anyio
 async def test_gemini_provider_generate():
-    from app.ai.providers.gemini import GeminiProvider
     from app.ai.exceptions import AIProviderError
+    from app.ai.providers.gemini import GeminiProvider
 
     mock_res = MagicMock()
     mock_res.status_code = 200
@@ -342,6 +348,7 @@ async def test_ollama_provider_generate():
 @pytest.mark.anyio
 async def test_circuit_breaker_half_open():
     import time
+
     cb = CircuitBreaker(failure_threshold=2, recovery_timeout_seconds=0.01)
     cb.record_failure()
     cb.record_failure()
@@ -357,10 +364,18 @@ async def test_circuit_breaker_half_open():
 async def test_compute_estimated_cost_edge_cases():
     from app.ai.providers.reliable import compute_estimated_cost
     from app.ai.types import TokenUsage
+
     # None usage
     assert compute_estimated_cost("gemini", "gemini-1.5-flash", None) is None
     # None input/output tokens
-    assert compute_estimated_cost("gemini", "gemini-1.5-flash", TokenUsage(input_tokens=None, output_tokens=None, total_tokens=None)) is None
+    assert (
+        compute_estimated_cost(
+            "gemini",
+            "gemini-1.5-flash",
+            TokenUsage(input_tokens=None, output_tokens=None, total_tokens=None),
+        )
+        is None
+    )
     # Unknown model fallback pricing
     cost = compute_estimated_cost("openai", "unknown-model", TokenUsage(1000, 1000, 2000))
     assert cost == (1000 * (0.15 / 1000000)) + (1000 * (0.60 / 1000000))
@@ -371,6 +386,7 @@ async def test_compute_estimated_cost_edge_cases():
 @pytest.mark.anyio
 async def test_reliable_provider_health_fallback():
     from app.ai.providers.reliable import ReliableAIProviderWrapper
+
     wrapper = ReliableAIProviderWrapper(primary_provider_name="nonexistent")
     health = await wrapper.health()
     assert health.healthy is False
@@ -379,16 +395,17 @@ async def test_reliable_provider_health_fallback():
 
 @pytest.mark.anyio
 async def test_reliable_provider_execute_timeout_retry():
-    from app.ai.providers.reliable import ReliableAIProviderWrapper
-    from app.ai.exceptions import AIProviderError
     import asyncio
-    
+
+    from app.ai.exceptions import AIProviderError
+    from app.ai.providers.reliable import ReliableAIProviderWrapper
+
     mock_prov = MagicMock()
     mock_prov.analyze_text = AsyncMock(side_effect=asyncio.TimeoutError())
-    
+
     wrapper = ReliableAIProviderWrapper(primary_provider_name="gemini")
     wrapper.get_provider_builder = lambda name: lambda: mock_prov
-    
+
     with patch("app.ai.providers.reliable.get_provider_priority_list", return_value=["gemini"]):
         with patch("app.core.config.settings.ai_timeout", 0.01):
             with pytest.raises(AIProviderError):
@@ -397,18 +414,15 @@ async def test_reliable_provider_execute_timeout_retry():
 
 @pytest.mark.anyio
 async def test_reliable_provider_execute_exception_retry():
-    from app.ai.providers.reliable import ReliableAIProviderWrapper
     from app.ai.exceptions import AIProviderError
-    
+    from app.ai.providers.reliable import ReliableAIProviderWrapper
+
     mock_prov = MagicMock()
     mock_prov.analyze_text = AsyncMock(side_effect=Exception("API Error"))
-    
+
     wrapper = ReliableAIProviderWrapper(primary_provider_name="gemini")
     wrapper.get_provider_builder = lambda name: lambda: mock_prov
-    
+
     with patch("app.ai.providers.reliable.get_provider_priority_list", return_value=["gemini"]):
         with pytest.raises(AIProviderError):
             await wrapper.analyze_text("some text")
-
-
-

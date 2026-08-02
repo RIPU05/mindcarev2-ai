@@ -92,7 +92,9 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
 
         # Record Prometheus
         HTTP_REQUESTS_TOTAL.labels(
-            method=request.method, path=request.url.path, status=str(response.status_code)
+            method=request.method,
+            path=request.url.path,
+            status=str(response.status_code),
         ).inc()
         HTTP_REQUEST_DURATION_SECONDS.labels(method=request.method, path=request.url.path).observe(
             duration_seconds

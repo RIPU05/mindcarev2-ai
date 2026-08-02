@@ -67,7 +67,7 @@ class GeminiReflectionGenerationService(ReflectionGenerationService):
                         "output_tokens": response.token_usage.output_tokens,
                         "total_tokens": response.token_usage.total_tokens,
                     },
-                    cost_usd=str(response.cost_usd) if response.cost_usd is not None else None,
+                    cost_usd=(str(response.cost_usd) if response.cost_usd is not None else None),
                 )
 
             res = await retry_on_json_error(_call_and_validate)

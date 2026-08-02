@@ -24,7 +24,10 @@ from app.exceptions import MindCareException
 logger = get_logger(__name__)
 
 openapi_tags = [
-    {"name": "auth", "description": "Supabase Auth JWT contract and current-user endpoints."},
+    {
+        "name": "auth",
+        "description": "Supabase Auth JWT contract and current-user endpoints.",
+    },
     {"name": "journal", "description": "Journal entry request and response contracts."},
     {"name": "analysis", "description": "Mood analysis request and status contracts."},
     {"name": "moods", "description": "Mood check-in and history contracts."},

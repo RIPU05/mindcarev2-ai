@@ -1,28 +1,29 @@
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
-from uuid import UUID, uuid4
 from datetime import datetime
+from unittest.mock import AsyncMock, MagicMock
+from uuid import uuid4
+
+import pytest
 
 from app.ai.types import AIResponse, TokenUsage
-from app.schemas.enums import RiskLevel, AnalysisStatus, ConversationStatus, AssistantRole, JournalSource
-from app.services.safety.gemini import GeminiSafetyScreeningService
-from app.services.safety.types import SafetyInput, SafetyCategory
+from app.models.analysis import MoodAnalysis
+from app.models.assistant import AssistantMessage
+from app.models.journal import JournalEntry
+from app.rag.prompt_builder import DefaultRAGPromptBuilder
+from app.rag.retriever import (
+    SqlCompositeRetriever,
+    SqlConversationRetriever,
+    SqlJournalRetriever,
+    SqlMoodRetriever,
+    SqlReflectionRetriever,
+)
+from app.rag.types import ContextWindow, RAGDocument, RetrievalSource, SearchQuery, SearchResult
+from app.schemas.enums import AnalysisStatus, AssistantRole, JournalSource, RiskLevel
 from app.services.emotion.gemini import GeminiEmotionAnalysisService
 from app.services.emotion.types import EmotionInput
 from app.services.reflection.gemini import GeminiReflectionGenerationService
 from app.services.reflection.types import ReflectionInput
-from app.rag.prompt_builder import DefaultRAGPromptBuilder
-from app.rag.types import ContextWindow, RAGDocument, RetrievalSource, SearchQuery, SearchResult
-from app.rag.retriever import (
-    SqlJournalRetriever,
-    SqlReflectionRetriever,
-    SqlMoodRetriever,
-    SqlConversationRetriever,
-    SqlCompositeRetriever,
-)
-from app.models.journal import JournalEntry
-from app.models.analysis import MoodAnalysis
-from app.models.assistant import AssistantMessage
+from app.services.safety.gemini import GeminiSafetyScreeningService
+from app.services.safety.types import SafetyCategory, SafetyInput
 
 
 # 1. Safety Service Unit Tests
@@ -55,8 +56,22 @@ async def test_safety_service_invalid_json_retry():
     # First call returns invalid JSON, second call returns valid JSON
     provider.analyze_text = AsyncMock(
         side_effect=[
-            AIResponse(content='{"risk_level": "invalid",', provider="gemini", model="gemini-1.5-flash", latency_ms=10, request_id="req-2", token_usage=TokenUsage(0, 0, 0)),
-            AIResponse(content='{"risk_level": "moderate", "categories": ["self_harm"], "requires_escalation": true, "rationale": "Self-harm detected"}', provider="gemini", model="gemini-1.5-flash", latency_ms=10, request_id="req-3", token_usage=TokenUsage(5, 5, 10))
+            AIResponse(
+                content='{"risk_level": "invalid",',
+                provider="gemini",
+                model="gemini-1.5-flash",
+                latency_ms=10,
+                request_id="req-2",
+                token_usage=TokenUsage(0, 0, 0),
+            ),
+            AIResponse(
+                content='{"risk_level": "moderate", "categories": ["self_harm"], "requires_escalation": true, "rationale": "Self-harm detected"}',
+                provider="gemini",
+                model="gemini-1.5-flash",
+                latency_ms=10,
+                request_id="req-3",
+                token_usage=TokenUsage(5, 5, 10),
+            ),
         ]
     )
     service = GeminiSafetyScreeningService(provider)
@@ -282,10 +297,19 @@ async def test_composite_retriever_fallback(db_session):
 @pytest.mark.anyio
 async def test_composite_retriever_semantic_success():
     mock_sem = MagicMock()
-    mock_sem.search = AsyncMock(return_value=[SearchResult(
-        score=0.95,
-        document=RAGDocument(id="sem-1", source=RetrievalSource.JOURNAL, text="Semantic text", user_id=uuid4())
-    )])
+    mock_sem.search = AsyncMock(
+        return_value=[
+            SearchResult(
+                score=0.95,
+                document=RAGDocument(
+                    id="sem-1",
+                    source=RetrievalSource.JOURNAL,
+                    text="Semantic text",
+                    user_id=uuid4(),
+                ),
+            )
+        ]
+    )
     composite = SqlCompositeRetriever(retrievers=[], semantic_search=mock_sem)
     query = SearchQuery(user_id=uuid4(), text="hello")
     results = await composite.retrieve(query)
@@ -325,14 +349,13 @@ async def test_composite_retriever_no_matching_sources():
     assert results == []
 
 
-
 @pytest.mark.anyio
 async def test_pipeline_orchestrator():
-    from app.services.orchestration.gemini import GeminiAIPipelineOrchestrator
-    from app.services.safety.types import SafetyResult
     from app.services.emotion.types import EmotionResult, EmotionSignal
-    from app.services.reflection.types import ReflectionResult
+    from app.services.orchestration.gemini import GeminiAIPipelineOrchestrator
     from app.services.orchestration.types import PipelineStage
+    from app.services.reflection.types import ReflectionResult
+    from app.services.safety.types import SafetyResult
 
     # Mock safety screen
     mock_safety = MagicMock()
@@ -341,7 +364,7 @@ async def test_pipeline_orchestrator():
             risk_level=RiskLevel.LOW,
             categories=["none"],
             requires_escalation=False,
-            rationale="calm"
+            rationale="calm",
         )
     )
 
@@ -351,7 +374,7 @@ async def test_pipeline_orchestrator():
         return_value=EmotionResult(
             primary_mood="joy",
             confidence=0.9,
-            emotions=[EmotionSignal(label="joy", score=0.9)]
+            emotions=[EmotionSignal(label="joy", score=0.9)],
         )
     )
 
@@ -368,16 +391,14 @@ async def test_pipeline_orchestrator():
     )
 
     orchestrator = GeminiAIPipelineOrchestrator(
-        safety=mock_safety,
-        emotion=mock_emotion,
-        reflection=mock_reflection
+        safety=mock_safety, emotion=mock_emotion, reflection=mock_reflection
     )
 
     input_payload = {
         "text": "Today was a fantastic day!",
         "journal_id": uuid4(),
         "analysis_id": uuid4(),
-        "user_id": uuid4()
+        "user_id": uuid4(),
     }
 
     result = await orchestrator.run(input_payload)
@@ -385,4 +406,3 @@ async def test_pipeline_orchestrator():
     assert result.analysis_id == str(input_payload["analysis_id"])
     assert len(result.completed_stages) > 0
     assert PipelineStage.REFLECTION_GENERATION in result.completed_stages
-

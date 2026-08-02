@@ -24,7 +24,8 @@ class AnthropicProvider(AIProvider):
         self.model = settings.anthropic_model
         self.api_key = settings.anthropic_api_key
         self.retry_policy = RetryPolicy(
-            max_retries=max(settings.ai_max_retries, 0), timeout_seconds=settings.ai_timeout
+            max_retries=max(settings.ai_max_retries, 0),
+            timeout_seconds=settings.ai_timeout,
         )
         self.base_url = "https://api.anthropic.com/v1"
 
@@ -78,7 +79,9 @@ class AnthropicProvider(AIProvider):
             provider=self.name,
             model=self.model,
             retry_policy=self.retry_policy,
-            missing_config_message=None if self.api_key else "ANTHROPIC_API_KEY is not configured.",
+            missing_config_message=(
+                None if self.api_key else "ANTHROPIC_API_KEY is not configured."
+            ),
         )
         return await client.post_json(
             url=f"{self.base_url}/messages",
@@ -110,7 +113,9 @@ class AnthropicProvider(AIProvider):
             else None
         )
         return TokenUsage(
-            input_tokens=input_tokens, output_tokens=output_tokens, total_tokens=total_tokens
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            total_tokens=total_tokens,
         )
 
     def _extract_request_id(

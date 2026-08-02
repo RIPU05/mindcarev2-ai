@@ -1,4 +1,5 @@
 import os
+import warnings
 from typing import AsyncGenerator
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -8,16 +9,17 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from sqlalchemy.ext.compiler import compiles
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
-from app.ai.types import AIResponse, ProviderHealthCheck, TokenUsage
-from app.core.config import settings
-from app.db.base import Base
-
 # Import all models to ensure they register on Base.metadata
 import app.models.analysis  # noqa: F401
 import app.models.assistant  # noqa: F401
 import app.models.journal  # noqa: F401
 import app.models.users  # noqa: F401
+from app.ai.types import AIResponse, ProviderHealthCheck, TokenUsage
+from app.db.base import Base
 from app.main import app
+
+warnings.filterwarnings("ignore", message=".*garbage collector.*")
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 # Add testserver dynamically to TrustedHostMiddleware allowed_hosts and force rebuild
 for middleware in app.user_middleware:
@@ -36,6 +38,7 @@ try:
     @compiles(JSONB, "sqlite")
     def compile_jsonb_sqlite(element, compiler, **kw):
         return "JSON"
+
 except ImportError:
     pass
 
@@ -52,6 +55,7 @@ def anyio_backend() -> str:
 @pytest.fixture(scope="session")
 async def test_engine(anyio_backend: str):
     from sqlalchemy.pool import NullPool
+
     engine = create_async_engine(
         DATABASE_URL,
         connect_args={"check_same_thread": False},
@@ -78,9 +82,7 @@ def override_db_globally(test_engine):
     import app.db.session
     import app.db.uow
 
-    test_sessionmaker = async_sessionmaker(
-        test_engine, expire_on_commit=False, class_=AsyncSession
-    )
+    test_sessionmaker = async_sessionmaker(test_engine, expire_on_commit=False, class_=AsyncSession)
 
     app.db.database.engine = test_engine
     app.db.database.AsyncSessionLocal = test_sessionmaker
@@ -122,10 +124,11 @@ def mock_ai_provider():
         )
     )
 
-    with patch("app.ai.get_ai_provider", return_value=mock_prov, create=True), patch(
-        "app.services.factory.get_ai_provider", return_value=mock_prov, create=True
-    ), patch("app.api.v1.health.get_ai_provider", return_value=mock_prov, create=True), patch(
-        "app.api.v1.assistant.get_ai_provider", return_value=mock_prov, create=True
+    with (
+        patch("app.ai.get_ai_provider", return_value=mock_prov, create=True),
+        patch("app.services.factory.get_ai_provider", return_value=mock_prov, create=True),
+        patch("app.api.v1.health.get_ai_provider", return_value=mock_prov, create=True),
+        patch("app.api.v1.assistant.get_ai_provider", return_value=mock_prov, create=True),
     ):
         yield mock_prov
 
@@ -156,7 +159,7 @@ def mock_rag_components(mock_ai_provider):
 @pytest.fixture(autouse=True)
 def mock_create_task_integration(request):
     import asyncio
-    from unittest.mock import patch, MagicMock
+    from unittest.mock import patch
 
     if "test_unit" in request.module.__name__:
         yield

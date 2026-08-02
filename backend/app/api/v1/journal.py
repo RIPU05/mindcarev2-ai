@@ -169,7 +169,10 @@ async def delete_journal_entry(
 
 
 @router.post(
-    "/{id}/restore", response_model=JournalResponse, status_code=200, responses=ERROR_RESPONSES
+    "/{id}/restore",
+    response_model=JournalResponse,
+    status_code=200,
+    responses=ERROR_RESPONSES,
 )
 async def restore_journal_entry(
     id: UUID,

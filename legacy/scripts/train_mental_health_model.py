@@ -35,10 +35,10 @@ from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 
 # ── Paths ──────────────────────────────────────────────────────────────────────
-ASSETS_DIR   = Path("attached_assets")
-PRIMARY_CSV  = ASSETS_DIR / "Combined_Data_1775671429588.csv"
-STRESS_CSV   = ASSETS_DIR / "stressed_anxious_cleaned_1775671387357.csv"
-MODEL_OUT    = Path("models") / "mental_health_model.pkl"
+ASSETS_DIR = Path("attached_assets")
+PRIMARY_CSV = ASSETS_DIR / "Combined_Data_1775671429588.csv"
+STRESS_CSV = ASSETS_DIR / "stressed_anxious_cleaned_1775671387357.csv"
+MODEL_OUT = Path("models") / "mental_health_model.pkl"
 
 # Minimum samples per class to be included in training
 MIN_SAMPLES = 200
@@ -48,12 +48,12 @@ MIN_SAMPLES = 200
 # Keys are raw values from the CSV (after .strip()).
 # Values are the canonical lowercase labels stored in the model.
 LABEL_MAP: dict[str, str] = {
-    "Normal":               "normal",
-    "Depression":           "depression",
-    "Suicidal":             "suicidal",
-    "Anxiety":              "anxiety",
-    "Bipolar":              "bipolar",
-    "Stress":               "stress",
+    "Normal": "normal",
+    "Depression": "depression",
+    "Suicidal": "suicidal",
+    "Anxiety": "anxiety",
+    "Bipolar": "bipolar",
+    "Stress": "stress",
     "Personality disorder": "personality disorder",
 }
 
@@ -97,8 +97,8 @@ def load_stress_supplement() -> pd.DataFrame:
 
 def main() -> None:
     # ── Load & merge ──────────────────────────────────────────────────────────
-    primary  = load_primary()
-    stress   = load_stress_supplement()
+    primary = load_primary()
+    stress = load_stress_supplement()
     df = pd.concat([primary, stress], ignore_index=True)
 
     # ── Clean ────────────────────────────────────────────────────────────────
@@ -126,22 +126,30 @@ def main() -> None:
     )
 
     # ── Model ────────────────────────────────────────────────────────────────
-    pipeline: Pipeline = Pipeline([
-        ("tfidf", TfidfVectorizer(
-            max_features=30_000,
-            ngram_range=(1, 2),
-            sublinear_tf=True,
-            min_df=3,
-        )),
-        ("clf", LogisticRegression(
-            max_iter=5000,
-            random_state=42,
-            C=1.0,
-            class_weight="balanced",
-            solver="lbfgs",
-            multi_class="auto",
-        )),
-    ])
+    pipeline: Pipeline = Pipeline(
+        [
+            (
+                "tfidf",
+                TfidfVectorizer(
+                    max_features=30_000,
+                    ngram_range=(1, 2),
+                    sublinear_tf=True,
+                    min_df=3,
+                ),
+            ),
+            (
+                "clf",
+                LogisticRegression(
+                    max_iter=5000,
+                    random_state=42,
+                    C=1.0,
+                    class_weight="balanced",
+                    solver="lbfgs",
+                    multi_class="auto",
+                ),
+            ),
+        ]
+    )
 
     print("Training…")
     pipeline.fit(X_train, y_train)
@@ -171,13 +179,34 @@ def main() -> None:
     # ── Realistic smoke test ─────────────────────────────────────────────────
     print("\nSmoke test (social-media-style inputs):")
     smoke_tests = [
-        ("normal",               "today was pretty good, had a nice walk and lunch with a friend, feeling grateful"),
-        ("depression",           "ive been feeling so empty and hopeless for weeks, nothing brings me joy anymore, i just want to sleep all day"),
-        ("suicidal",             "i cant stop thinking about ending it all, ive been making a plan and i dont see any reason to keep going"),
-        ("anxiety",              "my heart is racing and i cant breathe properly, every little thing makes me panic and i dont know why"),
-        ("bipolar",              "last week i felt on top of the world, barely slept but had so much energy, now im completely crashing"),
-        ("stress",               "work deadlines are piling up, i havent slept properly in days, i feel completely overwhelmed and burnt out"),
-        ("personality disorder", "my emotions go from zero to one hundred instantly and i push away everyone i care about then beg them to come back"),
+        (
+            "normal",
+            "today was pretty good, had a nice walk and lunch with a friend, feeling grateful",
+        ),
+        (
+            "depression",
+            "ive been feeling so empty and hopeless for weeks, nothing brings me joy anymore, i just want to sleep all day",
+        ),
+        (
+            "suicidal",
+            "i cant stop thinking about ending it all, ive been making a plan and i dont see any reason to keep going",
+        ),
+        (
+            "anxiety",
+            "my heart is racing and i cant breathe properly, every little thing makes me panic and i dont know why",
+        ),
+        (
+            "bipolar",
+            "last week i felt on top of the world, barely slept but had so much energy, now im completely crashing",
+        ),
+        (
+            "stress",
+            "work deadlines are piling up, i havent slept properly in days, i feel completely overwhelmed and burnt out",
+        ),
+        (
+            "personality disorder",
+            "my emotions go from zero to one hundred instantly and i push away everyone i care about then beg them to come back",
+        ),
     ]
     for expected, text in smoke_tests:
         pred = pipeline.predict([text])[0]

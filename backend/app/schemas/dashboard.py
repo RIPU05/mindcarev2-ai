@@ -10,4 +10,9 @@ class DashboardSummaryResponse(ApiSchema):
 
     @classmethod
     def mock(cls) -> "DashboardSummaryResponse":
-        return cls(journal_count=0, mood_count=0, latest_mood=None, risk_level=RiskLevel.UNKNOWN)
+        return cls(
+            journal_count=0,
+            mood_count=0,
+            latest_mood=None,
+            risk_level=RiskLevel.UNKNOWN,
+        )

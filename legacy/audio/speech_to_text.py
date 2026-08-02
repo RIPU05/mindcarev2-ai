@@ -38,8 +38,9 @@ def speech_to_text(audio_path: str, *, language: str = "en-US") -> str:
     except sr.UnknownValueError as e:
         raise ValueError("Speech could not be understood from the audio.") from e
     except sr.RequestError as e:
-        raise RuntimeError("Speech recognition request failed (check internet/API settings).") from e
+        raise RuntimeError(
+            "Speech recognition request failed (check internet/API settings)."
+        ) from e
 
 
 __all__ = ["speech_to_text"]
-

@@ -24,7 +24,8 @@ class GroqProvider(AIProvider):
         self.model = settings.groq_model
         self.api_key = settings.groq_api_key
         self.retry_policy = RetryPolicy(
-            max_retries=max(settings.ai_max_retries, 0), timeout_seconds=settings.ai_timeout
+            max_retries=max(settings.ai_max_retries, 0),
+            timeout_seconds=settings.ai_timeout,
         )
         self.base_url = "https://api.groq.com/openai/v1"
 
@@ -77,11 +78,14 @@ class GroqProvider(AIProvider):
             provider=self.name,
             model=self.model,
             retry_policy=self.retry_policy,
-            missing_config_message=None if self.api_key else "GROQ_API_KEY is not configured.",
+            missing_config_message=(None if self.api_key else "GROQ_API_KEY is not configured."),
         )
         return await client.post_json(
             url=f"{self.base_url}/chat/completions",
-            headers={"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"},
+            headers={
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json",
+            },
             payload=payload,
             extract_text=self._extract_text,
             extract_usage=self._extract_usage,

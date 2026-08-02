@@ -17,7 +17,9 @@ class MentalHealthPredictor:
     Replace with a calibrated classifier/regressor trained on your dataset.
     """
 
-    def predict(self, processed_text: str, emotion: EmotionResult | None = None) -> PredictionResult:
+    def predict(
+        self, processed_text: str, emotion: EmotionResult | None = None
+    ) -> PredictionResult:
         # Very small heuristic baseline for scaffold purposes only.
         risk = 0.2
         high_risk_markers = [

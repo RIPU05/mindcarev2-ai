@@ -51,7 +51,9 @@ async def chat(
                 AssistantConversation(
                     user_id=current_user.id,
                     title=payload.message[:80],
-                    context={"journal_id": str(payload.journal_id) if payload.journal_id else None},
+                    context={
+                        "journal_id": (str(payload.journal_id) if payload.journal_id else None)
+                    },
                 )
             )
             await uow.session.flush()
@@ -68,7 +70,7 @@ async def chat(
                 role=AssistantRole.USER,
                 content=payload.message,
                 message_metadata={
-                    "journal_id": str(payload.journal_id) if payload.journal_id else None
+                    "journal_id": (str(payload.journal_id) if payload.journal_id else None)
                 },
             )
         )
@@ -141,7 +143,7 @@ async def chat(
                     "model": response.model,
                     "latency_ms": response.latency_ms,
                     "request_id": response.request_id,
-                    "cost_usd": str(response.cost_usd) if response.cost_usd is not None else None,
+                    "cost_usd": (str(response.cost_usd) if response.cost_usd is not None else None),
                     "token_usage": {
                         "input_tokens": response.token_usage.input_tokens,
                         "output_tokens": response.token_usage.output_tokens,

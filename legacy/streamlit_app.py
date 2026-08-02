@@ -15,7 +15,5 @@ _ensure_src_on_path()
 
 from ai_mh_detection.dashboard.app import main  # noqa: E402
 
-
 if __name__ == "__main__":
     main()
-

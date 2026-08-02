@@ -31,7 +31,11 @@ class AssistantConversation(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin
 class AssistantMessage(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
     __tablename__ = "assistant_messages"
     __table_args__ = (
-        Index("ix_assistant_messages_conversation_id_created_at", "conversation_id", "created_at"),
+        Index(
+            "ix_assistant_messages_conversation_id_created_at",
+            "conversation_id",
+            "created_at",
+        ),
         Index("ix_assistant_messages_role", "role"),
     )
 

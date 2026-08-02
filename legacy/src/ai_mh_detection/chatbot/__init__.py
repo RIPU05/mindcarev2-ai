@@ -1,3 +1,3 @@
-from .chatbot import SupportChatbot, ChatbotResponse
+from .chatbot import ChatbotResponse, SupportChatbot
 
 __all__ = ["SupportChatbot", "ChatbotResponse"]

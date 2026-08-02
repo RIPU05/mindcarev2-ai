@@ -70,7 +70,8 @@ async def register(
     dependencies=[Depends(auth_rate_limiter)],
 )
 async def refresh(
-    payload: RefreshSessionRequest, session: AsyncSession = Depends(get_database_session)
+    payload: RefreshSessionRequest,
+    session: AsyncSession = Depends(get_database_session),
 ) -> AuthTokenResponse:
     if auth_client.is_refresh_token_invalid(payload.refresh_token):
         from app.exceptions import InvalidTokenException

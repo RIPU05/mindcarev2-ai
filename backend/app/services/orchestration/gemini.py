@@ -27,7 +27,10 @@ class GeminiAIPipelineOrchestrator(AIPipelineOrchestrator):
         )
         completed.append(PipelineStage.SAFETY_SCREENING)
         emotion = await self.emotion.analyze(
-            {"text": payload.get("text", ""), "analysis_id": payload.get("analysis_id") or ""}
+            {
+                "text": payload.get("text", ""),
+                "analysis_id": payload.get("analysis_id") or "",
+            }
         )
         completed.append(PipelineStage.EMOTION_ANALYSIS)
         completed.append(PipelineStage.MOOD_ANALYSIS)

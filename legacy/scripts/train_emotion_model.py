@@ -62,7 +62,9 @@ def _detect_default_dataset() -> str | None:
 
 
 def _parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Train a baseline emotion model (TF-IDF + LogisticRegression).")
+    parser = argparse.ArgumentParser(
+        description="Train a baseline emotion model (TF-IDF + LogisticRegression)."
+    )
     parser.add_argument(
         "--data-path",
         default=_detect_default_dataset(),

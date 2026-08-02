@@ -1,5 +1,5 @@
 import uuid
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from httpx import AsyncClient
@@ -10,10 +10,7 @@ from app.models.users import User
 
 @pytest.fixture
 def mock_user():
-    return User(
-        id=uuid.UUID("11111111-1111-1111-1111-111111111111"),
-        email="test@example.com"
-    )
+    return User(id=uuid.UUID("11111111-1111-1111-1111-111111111111"), email="test@example.com")
 
 
 @pytest.fixture(autouse=True)
@@ -47,7 +44,7 @@ async def test_journal_endpoints_success(client: AsyncClient):
         "content": "I feel very anxious about my final exam tomorrow.",
         "title": "Anxiety Check",
         "tags": ["anxiety", "exam"],
-        "source": "manual"
+        "source": "manual",
     }
     response = await client.post("/api/v1/journal", json=payload)
     assert response.status_code == 201
@@ -121,16 +118,21 @@ async def test_auth_login_success(client: AsyncClient):
         "user": {
             "id": "11111111-1111-1111-1111-111111111111",
             "email": "test@example.com",
-        }
+        },
     }
     mock_claims = {
         "sub": "11111111-1111-1111-1111-111111111111",
         "email": "test@example.com",
-        "user_metadata": {"display_name": "Test User"}
+        "user_metadata": {"display_name": "Test User"},
     }
 
-    with patch("app.auth.client.auth_client.sign_in_with_password", AsyncMock(return_value=mock_supabase_res)), \
-         patch("app.auth.client.auth_client.verify_token", AsyncMock(return_value=mock_claims)):
+    with (
+        patch(
+            "app.auth.client.auth_client.sign_in_with_password",
+            AsyncMock(return_value=mock_supabase_res),
+        ),
+        patch("app.auth.client.auth_client.verify_token", AsyncMock(return_value=mock_claims)),
+    ):
         payload = {"email": "test@example.com", "password": "securepassword"}
         response = await client.post("/api/v1/auth/login", json=payload)
         assert response.status_code == 200
@@ -148,20 +150,22 @@ async def test_auth_register_success(client: AsyncClient):
         "user": {
             "id": "11111111-1111-1111-1111-111111111111",
             "email": "new@example.com",
-        }
+        },
     }
     mock_claims = {
         "sub": "11111111-1111-1111-1111-111111111111",
         "email": "new@example.com",
-        "user_metadata": {"display_name": "New User"}
+        "user_metadata": {"display_name": "New User"},
     }
 
-    with patch("app.auth.client.auth_client.sign_up", AsyncMock(return_value=mock_supabase_res)), \
-         patch("app.auth.client.auth_client.verify_token", AsyncMock(return_value=mock_claims)):
+    with (
+        patch("app.auth.client.auth_client.sign_up", AsyncMock(return_value=mock_supabase_res)),
+        patch("app.auth.client.auth_client.verify_token", AsyncMock(return_value=mock_claims)),
+    ):
         payload = {
             "email": "new@example.com",
             "password": "securepassword",
-            "display_name": "New User"
+            "display_name": "New User",
         }
         response = await client.post("/api/v1/auth/register", json=payload)
         assert response.status_code == 201
@@ -179,11 +183,16 @@ async def test_auth_refresh_success(client: AsyncClient):
     mock_claims = {
         "sub": "11111111-1111-1111-1111-111111111111",
         "email": "test@example.com",
-        "user_metadata": {"display_name": "Test User"}
+        "user_metadata": {"display_name": "Test User"},
     }
 
-    with patch("app.auth.client.auth_client.refresh_session", AsyncMock(return_value=mock_supabase_res)), \
-         patch("app.auth.client.auth_client.verify_token", AsyncMock(return_value=mock_claims)):
+    with (
+        patch(
+            "app.auth.client.auth_client.refresh_session",
+            AsyncMock(return_value=mock_supabase_res),
+        ),
+        patch("app.auth.client.auth_client.verify_token", AsyncMock(return_value=mock_claims)),
+    ):
         payload = {"refresh_token": "old_refresh_token"}
         response = await client.post("/api/v1/auth/refresh", json=payload)
         assert response.status_code == 200
@@ -195,6 +204,7 @@ async def test_auth_refresh_success(client: AsyncClient):
 async def test_auth_me_success(client: AsyncClient):
     # Disable autouse auth mock override in FastAPI to test real dependencies flow
     from app.main import app
+
     original_overrides = dict(app.dependency_overrides)
     app.dependency_overrides.clear()
 
@@ -218,6 +228,7 @@ async def test_auth_me_success(client: AsyncClient):
 async def test_auth_me_unauthorized(client: AsyncClient):
     # Disable autouse auth mock override in FastAPI to test real dependencies flow
     from app.main import app
+
     original_overrides = dict(app.dependency_overrides)
     app.dependency_overrides.clear()
 
@@ -231,11 +242,13 @@ async def test_auth_me_unauthorized(client: AsyncClient):
 # 5. Profile Endpoints
 @pytest.mark.anyio
 async def test_profile_endpoints(client: AsyncClient):
-    from app.main import app
     from app.auth.dependencies import get_current_user
+    from app.main import app
+
     original_override = app.dependency_overrides.get(get_current_user)
 
     unique_id = uuid.uuid4()
+
     async def _override():
         return User(id=unique_id, email="profile@example.com")
 
@@ -264,11 +277,13 @@ async def test_profile_endpoints(client: AsyncClient):
 # 6. Settings Endpoints
 @pytest.mark.anyio
 async def test_settings_endpoints(client: AsyncClient):
-    from app.main import app
     from app.auth.dependencies import get_current_user
+    from app.main import app
+
     original_override = app.dependency_overrides.get(get_current_user)
 
     unique_id = uuid.uuid4()
+
     async def _override():
         return User(id=unique_id, email="settings@example.com")
 
@@ -319,4 +334,3 @@ async def test_moods_endpoints(client: AsyncClient):
     data = response.json()
     assert "items" in data
     assert "total" in data
-

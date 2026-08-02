@@ -7,9 +7,10 @@ Create Date: 2026-07-31 00:00:00.000000
 
 from collections.abc import Sequence
 
-from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
+
+from alembic import op
 
 revision: str = "20260731_0001"
 down_revision: str | None = None
@@ -121,7 +122,11 @@ def upgrade() -> None:
         "user_settings",
         sa.Column("user_id", sa.Uuid(), nullable=False),
         sa.Column("notifications_enabled", sa.Boolean(), nullable=False),
-        sa.Column("privacy_preferences", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
+        sa.Column(
+            "privacy_preferences",
+            postgresql.JSONB(astext_type=sa.Text()),
+            nullable=False,
+        ),
         sa.Column(
             "accessibility_preferences",
             postgresql.JSONB(astext_type=sa.Text()),

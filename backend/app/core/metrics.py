@@ -5,10 +5,14 @@ HTTP_REQUESTS_TOTAL = Counter(
     "http_requests_total", "Total HTTP requests count", ["method", "path", "status"]
 )
 HTTP_REQUEST_DURATION_SECONDS = Histogram(
-    "http_request_duration_seconds", "HTTP request latency in seconds", ["method", "path"]
+    "http_request_duration_seconds",
+    "HTTP request latency in seconds",
+    ["method", "path"],
 )
 AI_REQUEST_DURATION_SECONDS = Histogram(
-    "ai_request_duration_seconds", "AI request duration in seconds", ["provider", "model", "stage"]
+    "ai_request_duration_seconds",
+    "AI request duration in seconds",
+    ["provider", "model", "stage"],
 )
 AI_TOKEN_USAGE_TOTAL = Counter(
     "ai_token_usage_total", "Total AI token usage", ["provider", "model", "token_type"]
@@ -25,7 +29,8 @@ RAG_RETRIEVAL_DURATION_SECONDS = Histogram(
     "rag_retrieval_duration_seconds", "RAG retrieval duration in seconds"
 )
 REFLECTION_GENERATION_DURATION_SECONDS = Histogram(
-    "reflection_generation_duration_seconds", "Reflection generation duration in seconds"
+    "reflection_generation_duration_seconds",
+    "Reflection generation duration in seconds",
 )
 AI_ESTIMATED_COST_USD = Counter(
     "ai_estimated_cost_usd", "Estimated AI cost in USD", ["provider", "model"]

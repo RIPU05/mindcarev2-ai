@@ -12,6 +12,7 @@ import { Growth } from "@/components/story/growth";
 import { Assistant } from "@/components/story/assistant";
 import { Privacy } from "@/components/story/privacy";
 import { Closing } from "@/components/story/closing";
+import { Questions } from "@/components/story/questions";
 import { Chapter } from "@/components/story/primitives";
 import { JournalEditor } from "@/components/app/journal-editor";
 import { ReflectionPanel } from "@/components/app/reflection-panel";
@@ -68,14 +69,18 @@ function Index() {
         <Assistant />
         <Seam from="base" to="deep" height={180} />
         <Privacy />
+        <Seam from="deep" to="paper" height={180} />
         <Chapter id="settings" label="Your account" tone="paper">
           <div className="space-y-10">
             <SettingsScreen />
             <ProfileScreen />
           </div>
         </Chapter>
-        <Seam from="deep" to="base" height={180} />
+        <Seam from="paper" to="base" />
+        <Questions />
         <Closing />
+
+
       </main>
       <StoryFooter />
     </motion.div>

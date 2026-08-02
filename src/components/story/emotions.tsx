@@ -18,10 +18,10 @@ export function Emotions() {
         <div className="lg:sticky lg:top-32 lg:self-start">
 
           <FadeIn>
-            <h2 className="font-display text-3xl leading-[1.14] sm:text-[2.6rem]">
+            <ChapterTitle>
               Words become
               <span className="italic text-accent"> colour.</span>
-            </h2>
+            </ChapterTitle>
             <p className="mt-6 max-w-sm text-base leading-relaxed text-muted-foreground">
               Not a score out of ten. A soft field of everything that moved
               through the evening, sized by how loudly it appeared.

@@ -23,10 +23,10 @@ export function ReflectionLetter() {
       <div ref={ref} className="grid gap-16 lg:grid-cols-[0.7fr_1.3fr] lg:gap-20">
         <div className="lg:sticky lg:top-32 lg:self-start">
           <FadeIn>
-            <h2 className="font-display text-3xl leading-[1.14] sm:text-[2.6rem]">
+            <ChapterTitle>
               The journal folds away.
               <span className="block italic text-primary">A letter stays.</span>
-            </h2>
+            </ChapterTitle>
           </FadeIn>
           <motion.div
             aria-hidden

@@ -32,10 +32,10 @@ export function Questions() {
     <Chapter id="questions" index="VIII" label="Questions">
       <div className="grid gap-14 md:grid-cols-[0.85fr_1.15fr] md:gap-20">
         <FadeIn className="md:sticky md:top-32 md:self-start">
-          <h2 className="font-display text-3xl leading-[1.14] sm:text-[2.6rem]">
+          <ChapterTitle>
             Fair things
             <span className="block italic text-primary">to ask first.</span>
-          </h2>
+          </ChapterTitle>
         </FadeIn>
 
         <ul className="divide-y divide-border/70 border-y border-border/70">

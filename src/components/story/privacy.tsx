@@ -48,9 +48,9 @@ export function Privacy() {
         </motion.svg>
 
         <FadeIn delay={0.4}>
-          <h2 className="mt-12 font-display text-4xl leading-[1.1] sm:text-6xl">
+          <ChapterTitle>
             Your thoughts belong to you.
-          </h2>
+          </ChapterTitle>
           <p className="mx-auto mt-8 max-w-md text-base leading-relaxed opacity-70">
             End-to-end encrypted. Never sold, never advertised against, never
             used to train anyone's model. Export or delete everything in one tap.

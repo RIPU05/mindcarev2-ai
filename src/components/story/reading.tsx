@@ -19,10 +19,10 @@ export function Reading() {
     <Chapter id="reading" index="II" label="Being read">
       <div className="max-w-3xl">
         <FadeIn>
-          <h2 className="font-display text-3xl leading-[1.14] sm:text-[2.6rem]">
+          <ChapterTitle>
             Then something reads it back —
             <span className="italic text-primary"> properly.</span>
-          </h2>
+          </ChapterTitle>
         </FadeIn>
       </div>
 

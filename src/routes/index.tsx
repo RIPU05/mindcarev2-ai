@@ -75,8 +75,9 @@ function Index() {
             <ProfileScreen />
           </div>
         </Chapter>
-        <Seam from="deep" to="base" height={180} />
+        <Questions />
         <Closing />
+
       </main>
       <StoryFooter />
     </motion.div>

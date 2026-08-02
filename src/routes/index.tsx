@@ -12,6 +12,7 @@ import { Growth } from "@/components/story/growth";
 import { Assistant } from "@/components/story/assistant";
 import { Privacy } from "@/components/story/privacy";
 import { Closing } from "@/components/story/closing";
+import { Questions } from "@/components/story/questions";
 import { Chapter } from "@/components/story/primitives";
 import { JournalEditor } from "@/components/app/journal-editor";
 import { ReflectionPanel } from "@/components/app/reflection-panel";

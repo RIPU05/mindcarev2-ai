@@ -12,7 +12,7 @@ import {
 
 import { cn } from "@/lib/utils";
 import { EASE } from "@/components/story/primitives";
-import { user } from "@/components/app/data";
+import { useProfile, useDashboard } from "@/hooks/useApi";
 
 export const navItems = [
   { key: "journal", label: "Journal", icon: BookOpen },
@@ -47,6 +47,14 @@ export function AppFrame({
   rail?: boolean;
   className?: string;
 }) {
+  const { data: profile } = useProfile();
+  const { data: dashboard } = useDashboard();
+
+  const displayName = profile?.display_name || "Member";
+  const handle = profile?.email ? profile.email.split("@")[0] : "member";
+  const initials = displayName.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) || "M";
+  const streak = dashboard?.mood_count ?? 0;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 28 }}
@@ -64,7 +72,7 @@ export function AppFrame({
         <span aria-hidden className="size-2 rounded-full bg-border" />
         <span aria-hidden className="size-2 rounded-full bg-border" />
         <span className="ml-3 truncate text-[0.68rem] tracking-[0.14em] text-muted-foreground uppercase">
-          MindCare · {user.handle}
+          MindCare · {handle}
         </span>
       </div>
 
@@ -100,12 +108,12 @@ export function AppFrame({
 
             <div className="mt-6 flex items-center gap-2.5 rounded-xl px-2 py-2">
               <span className="grid size-7 place-items-center rounded-full bg-primary text-[0.6rem] tracking-wide text-primary-foreground">
-                {user.initials}
+                {initials}
               </span>
               <span className="min-w-0">
-                <span className="block truncate text-[0.76rem]">{user.name}</span>
+                <span className="block truncate text-[0.76rem]">{displayName}</span>
                 <span className="block text-[0.66rem] text-muted-foreground">
-                  {user.streak} day streak
+                  {streak} day streak
                 </span>
               </span>
             </div>

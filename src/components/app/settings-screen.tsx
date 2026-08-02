@@ -1,16 +1,62 @@
 import { motion } from "motion/react";
 import { Lock } from "lucide-react";
+import { toast } from "sonner";
 
 import { AppFrame } from "@/components/app/app-frame";
 import { EASE } from "@/components/story/primitives";
-import { settingsGroups } from "@/components/app/data";
+import { useSettings, useUpdateSettings } from "@/hooks/useApi";
 
 export function SettingsScreen() {
+  const { data: settings, isLoading } = useSettings();
+  const { mutate: updateSettings } = useUpdateSettings();
+
+  const handleToggle = (key: "e2e_encryption_enabled" | "privacy_lock_enabled" | "weekly_summary_enabled" | "notifications_enabled", currentValue: boolean) => {
+    updateSettings({ [key]: !currentValue });
+    toast.success("Settings updated");
+  };
+
+  const groups = [
+    {
+      group: "Privacy",
+      items: [
+        {
+          key: "e2e_encryption_enabled" as const,
+          label: "End-to-end encryption",
+          detail: "Keys are generated on your device and are never visible to the backend service.",
+          value: settings?.e2e_encryption_enabled ?? false,
+        },
+        {
+          key: "privacy_lock_enabled" as const,
+          label: "Lock with Face ID",
+          detail: "Require bio-metric authentication when reopening the browser frame.",
+          value: settings?.privacy_lock_enabled ?? false,
+        },
+      ],
+    },
+    {
+      group: "Reflections",
+      items: [
+        {
+          key: "weekly_summary_enabled" as const,
+          label: "Weekly email report",
+          detail: "Send a monthly/weekly summary letter to help trace long running themes.",
+          value: settings?.weekly_summary_enabled ?? false,
+        },
+        {
+          key: "notifications_enabled" as const,
+          label: "Daily reminder notification",
+          detail: "A quiet visual nudge to check-in at your usual writing hour.",
+          value: settings?.notifications_enabled ?? false,
+        },
+      ],
+    },
+  ];
+
   return (
     <AppFrame
       active="settings"
       title="Settings"
-      subtitle="Everything is off until you turn it on"
+      subtitle="Configure your privacy and journaling preferences."
       action={
         <span className="flex items-center gap-1.5 text-[0.7rem] text-primary">
           <Lock aria-hidden className="size-3.5" strokeWidth={1.7} /> Device key held
@@ -19,7 +65,7 @@ export function SettingsScreen() {
       }
     >
       <div className="grid gap-8 md:grid-cols-2">
-        {settingsGroups.map((g, gi) => (
+        {groups.map((g, gi) => (
           <div key={g.group}>
             <p className="text-[0.66rem] uppercase tracking-[0.2em] text-muted-foreground">
               {g.group}
@@ -40,11 +86,13 @@ export function SettingsScreen() {
                       {item.detail}
                     </span>
                   </span>
-                  <span
+                  <button
+                    type="button"
                     role="switch"
                     aria-checked={item.value}
                     aria-label={item.label}
-                    className="mt-0.5 flex h-5 w-9 shrink-0 items-center rounded-full p-0.5 transition-colors duration-500"
+                    onClick={() => handleToggle(item.key, item.value)}
+                    className="mt-0.5 flex h-5 w-9 shrink-0 items-center rounded-full p-0.5 transition-colors duration-500 cursor-default"
                     style={{
                       background: item.value
                         ? "var(--color-primary)"
@@ -56,7 +104,7 @@ export function SettingsScreen() {
                       animate={{ x: item.value ? 16 : 0 }}
                       transition={{ duration: 0.6, ease: EASE }}
                     />
-                  </span>
+                  </button>
                 </motion.li>
               ))}
             </ul>
@@ -65,12 +113,11 @@ export function SettingsScreen() {
       </div>
 
       <div className="mt-7 rounded-2xl border border-border/70 bg-paper p-5">
-        <p className="font-display text-[1rem] leading-relaxed">
+        <p className="font-display text-[1rem] leading-relaxed text-red-500">
           Delete everything, permanently.
         </p>
         <p className="mt-2 max-w-lg text-[0.76rem] leading-relaxed text-muted-foreground">
-          One confirmation, no retention window, no backup copy. 148 entries would
-          be gone in under a second — which is how it should work.
+          Clear your remote account settings and sync preferences. This action runs immediately and resets defaults.
         </p>
       </div>
     </AppFrame>

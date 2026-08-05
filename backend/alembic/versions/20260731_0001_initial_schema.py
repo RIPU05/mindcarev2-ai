@@ -78,6 +78,13 @@ def upgrade() -> None:
     )
 
     bind = op.get_bind()
+    dialect_name = bind.dialect.name
+
+    def get_json_type():
+        if dialect_name == "postgresql":
+            return postgresql.JSONB(astext_type=sa.Text())
+        return sa.JSON()
+
     user_status.create(bind, checkfirst=True)
     journal_source.create(bind, checkfirst=True)
     analysis_input_type.create(bind, checkfirst=True)
@@ -124,12 +131,12 @@ def upgrade() -> None:
         sa.Column("notifications_enabled", sa.Boolean(), nullable=False),
         sa.Column(
             "privacy_preferences",
-            postgresql.JSONB(astext_type=sa.Text()),
+            get_json_type(),
             nullable=False,
         ),
         sa.Column(
             "accessibility_preferences",
-            postgresql.JSONB(astext_type=sa.Text()),
+            get_json_type(),
             nullable=False,
         ),
         sa.Column("id", sa.Uuid(), nullable=False),
@@ -147,7 +154,7 @@ def upgrade() -> None:
         sa.Column("user_id", sa.Uuid(), nullable=False),
         sa.Column("title", sa.String(length=200), nullable=True),
         sa.Column("content", sa.Text(), nullable=False),
-        sa.Column("tags", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
+        sa.Column("tags", get_json_type(), nullable=False),
         sa.Column("version", sa.Integer(), nullable=False),
         sa.Column("source", journal_source, nullable=False),
         sa.Column("id", sa.Uuid(), nullable=False),
@@ -169,7 +176,7 @@ def upgrade() -> None:
         sa.Column("user_id", sa.Uuid(), nullable=False),
         sa.Column("title", sa.String(length=200), nullable=True),
         sa.Column("status", conversation_status, nullable=False),
-        sa.Column("context", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
+        sa.Column("context", get_json_type(), nullable=False),
         sa.Column("id", sa.Uuid(), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
@@ -197,8 +204,8 @@ def upgrade() -> None:
         sa.Column("primary_mood", sa.String(length=80), nullable=True),
         sa.Column("confidence", sa.Float(), nullable=True),
         sa.Column("risk_level", risk_level, nullable=False),
-        sa.Column("emotion_scores", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
-        sa.Column("provider_metadata", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
+        sa.Column("emotion_scores", get_json_type(), nullable=False),
+        sa.Column("provider_metadata", get_json_type(), nullable=False),
         sa.Column("id", sa.Uuid(), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
@@ -221,7 +228,7 @@ def upgrade() -> None:
         sa.Column("conversation_id", sa.Uuid(), nullable=False),
         sa.Column("role", assistant_role, nullable=False),
         sa.Column("content", sa.Text(), nullable=False),
-        sa.Column("metadata", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
+        sa.Column("metadata", get_json_type(), nullable=False),
         sa.Column("id", sa.Uuid(), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),

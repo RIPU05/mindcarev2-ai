@@ -42,8 +42,21 @@ ERROR_RESPONSES: dict[int | str, dict] = {
 async def login(
     payload: LoginRequest, session: AsyncSession = Depends(get_database_session)
 ) -> AuthTokenResponse:
-    supabase_response = await auth_client.sign_in_with_password(payload.email, payload.password)
-    return await build_auth_response(supabase_response, session)
+    import traceback
+    try:
+        print("LOGIN START")
+        print("Incoming email:", payload.email)
+        print("before calling auth_client.sign_in_with_password")
+        supabase_response = await auth_client.sign_in_with_password(payload.email, payload.password)
+        print("the complete supabase_response:", supabase_response)
+        print("before build_auth_response")
+        response = await build_auth_response(supabase_response, session)
+        print("after build_auth_response")
+        return response
+    except Exception as e:
+        print("LOGIN FAILED:", repr(e))
+        traceback.print_exc()
+        raise
 
 
 @router.post(

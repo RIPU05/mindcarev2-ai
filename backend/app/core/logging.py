@@ -36,7 +36,7 @@ def configure_logging() -> None:
     root_logger.addHandler(handler)
     root_logger.setLevel(logging.INFO)
 
-    logging.getLogger("uvicorn.access").handlers.clear()
+    # logging.getLogger("uvicorn.access").handlers.clear()
 
 
 def configure_database_logging() -> None:

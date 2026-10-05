@@ -77,12 +77,24 @@ class Settings(BaseSettings):
                 return False
         return value
 
+    @field_validator("database_url", mode="before")
+    @classmethod
+    def parse_database_url(cls, value: Any) -> Any:
+        if isinstance(value, str):
+            url = value.strip()
+            if url.startswith("postgres://"):
+                return "postgresql+asyncpg://" + url[len("postgres://") :]
+            if url.startswith("postgresql://"):
+                return "postgresql+asyncpg://" + url[len("postgresql://") :]
+        return value
+
     @field_validator("trusted_hosts", mode="before")
     @classmethod
     def parse_trusted_hosts(cls, value: Any) -> list[str]:
         if isinstance(value, str):
             return [host.strip() for host in value.split(",") if host.strip()]
         return value
+
 
 
 @lru_cache

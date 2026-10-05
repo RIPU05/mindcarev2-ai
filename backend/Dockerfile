@@ -22,6 +22,7 @@ ENV PATH=/home/appuser/.local/bin:$PATH
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
+    ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 # Create non-root system user and group
@@ -39,7 +40,8 @@ EXPOSE 8000
 
 # Healthcheck checking the live API probe endpoint
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8000/health/live || exit 1
+    CMD curl -f http://localhost:${PORT:-8000}/health/live || exit 1
 
 # Start FastAPI application in production mode
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+

@@ -1,0 +1,73 @@
+# Render Blueprint Deployment Configuration for MindCare AI v2.0
+# Website: https://render.com
+# Usage: Connect GitHub repository `RIPU05/mindcarev2-ai` to Render Blueprint.
+
+services:
+  # 1. FastAPI Production Web API Service
+  - type: web
+    name: mindcare-api
+    env: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: starter
+    region: oregon
+    healthCheckPath: /health/live
+    preDeployCommand: cd backend && alembic upgrade head
+    envVars:
+      - key: APP_NAME
+        value: MindCare AI API
+      - key: APP_ENV
+        value: production
+      - key: DEBUG
+        value: "false"
+      - key: API_PREFIX
+        value: /api/v1
+      - key: BACKEND_CORS_ORIGINS
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_JWT_SECRET
+        sync: false
+      - key: SUPABASE_JWT_AUDIENCE
+        value: authenticated
+      - key: DEFAULT_AI_PROVIDER
+        value: gemini
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-1.5-flash
+
+  # 2. Redis Audio Analysis Background Worker
+  - type: worker
+    name: mindcare-worker
+    env: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    dockerCommand: python -m app.worker
+    plan: starter
+    region: oregon
+    envVars:
+      - key: APP_NAME
+        value: MindCare AI Worker
+      - key: APP_ENV
+        value: production
+      - key: DEBUG
+        value: "false"
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-1.5-flash

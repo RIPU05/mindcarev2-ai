@@ -62,12 +62,35 @@ class GeminiProvider(AIProvider):
             )
         except Exception as exc:
             latency_ms = int((time.perf_counter() - started) * 1000)
+            available_models: list[str] = []
+            if self.api_key:
+                try:
+                    import httpx
+
+                    async with httpx.AsyncClient(timeout=10.0) as client:
+                        resp = await client.get(
+                            f"{self.base_url}/models", params={"key": self.api_key}
+                        )
+                        if resp.status_code == 200:
+                            models_data = resp.json().get("models") or []
+                            for m in models_data:
+                                name = m.get("name", "")
+                                methods = m.get("supportedGenerationMethods") or []
+                                if "generateContent" in methods:
+                                    available_models.append(name.replace("models/", ""))
+                except Exception:
+                    pass
+
+            err_msg = str(exc)
+            if available_models:
+                err_msg += f" (Available generateContent models: {', '.join(available_models[:10])})"
+
             return ProviderHealthCheck(
                 provider=self.name,
                 model=self.model,
                 healthy=False,
                 latency_ms=latency_ms,
-                error=str(exc),
+                error=err_msg,
             )
 
     async def _generate(self, prompt: str) -> AIResponse:

@@ -20,16 +20,17 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 warnings.filterwarnings("ignore", message=".*garbage collector.*")
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-# Add testserver dynamically to TrustedHostMiddleware allowed_hosts and force rebuild
+# Add wildcard '*' dynamically to TrustedHostMiddleware allowed_hosts and force rebuild
 for middleware in app.user_middleware:
     if middleware.cls == TrustedHostMiddleware:
         allowed = list(middleware.kwargs.get("allowed_hosts", []))
-        if "testserver" not in allowed:
-            allowed.append("testserver")
+        if "*" not in allowed:
+            allowed.append("*")
             middleware.kwargs["allowed_hosts"] = allowed
 
 # Reset Starlette private middleware stack to apply allowed_hosts updates
 app._middleware_stack = None
+
 
 try:
     from sqlalchemy.dialects.postgresql import JSONB

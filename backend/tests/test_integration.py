@@ -396,3 +396,17 @@ async def test_assistant_get_endpoints(client: AsyncClient):
     # 5. GET messages 404 check
     bad_msg_response = await client.get(f"/api/v1/assistant/conversations/{fake_id}/messages")
     assert bad_msg_response.status_code == 404
+
+
+@pytest.mark.anyio
+async def test_health_live_endpoint_with_custom_host(client: AsyncClient):
+    # Verify GET /health/live returns HTTP 200 even with cloud host headers (Render, Vercel, AWS)
+    response = await client.get("/health/live", headers={"Host": "mindcare-api-6o53.onrender.com"})
+    assert response.status_code == 200
+    assert response.json() == {"status": "alive"}
+
+    # Verify /api/v1/health/live also returns HTTP 200
+    prefixed_res = await client.get("/api/v1/health/live", headers={"Host": "mindcare-api-6o53.onrender.com"})
+    assert prefixed_res.status_code == 200
+    assert prefixed_res.json() == {"status": "alive"}
+

@@ -22,8 +22,9 @@ class Settings(BaseSettings):
         default=["http://localhost:3000"],
         alias="BACKEND_CORS_ORIGINS",
     )
-    trusted_hosts: list[str] = Field(default=["localhost", "127.0.0.1"], alias="TRUSTED_HOSTS")
+    trusted_hosts: list[str] = Field(default=["*"], alias="TRUSTED_HOSTS")
     database_url: str = Field(
+
         default="postgresql+asyncpg://postgres:postgres@localhost:5432/mindcare",
         alias="DATABASE_URL",
     )

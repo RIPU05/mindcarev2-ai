@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     api_host: str = Field(default="0.0.0.0", alias="API_HOST")  # nosec B104
     api_port: int = Field(default=8000, alias="API_PORT")
     backend_cors_origins: list[str] = Field(
-        default=["http://localhost:3000"],
+        default=["http://localhost:3000", "https://mindcarev2-ai.vercel.app"],
         alias="BACKEND_CORS_ORIGINS",
     )
     trusted_hosts: list[str] = Field(default=["*"], alias="TRUSTED_HOSTS")

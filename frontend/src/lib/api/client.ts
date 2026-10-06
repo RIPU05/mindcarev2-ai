@@ -102,7 +102,7 @@ export class ApiClient {
 }
 
 export const apiClient = new ApiClient({
-  baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://mindcare-api-6o53.onrender.com/api/v1",
+  baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api/v1",
   timeoutMs: Number(process.env.NEXT_PUBLIC_API_TIMEOUT_MS ?? 12_000),
   retries: Number(process.env.NEXT_PUBLIC_API_RETRIES ?? 1)
 });

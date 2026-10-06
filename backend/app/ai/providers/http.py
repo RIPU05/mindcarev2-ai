@@ -100,6 +100,26 @@ class JsonHttpAIClient:
                 )
             except RateLimitError:
                 raise
+            except httpx.HTTPStatusError as exc:
+                status_code = exc.response.status_code if exc.response is not None else 500
+                err_detail = f"{self.provider} HTTP {status_code} error"
+                try:
+                    if exc.response is not None:
+                        body = exc.response.json()
+                        if isinstance(body, dict) and "error" in body:
+                            err_obj = body["error"]
+                            if isinstance(err_obj, dict):
+                                msg = err_obj.get("message")
+                                reason = err_obj.get("status")
+                                parts = [f"HTTP {status_code}"]
+                                if reason:
+                                    parts.append(str(reason))
+                                if msg:
+                                    parts.append(str(msg))
+                                err_detail = f"{self.provider} error ({': '.join(parts)})"
+                except Exception:
+                    pass
+                last_error = AIProviderError(err_detail, details={"status_code": status_code, "request_id": local_request_id})
             except (httpx.HTTPError, AIProviderError) as exc:
                 last_error = exc
 
@@ -120,5 +140,5 @@ class JsonHttpAIClient:
         if isinstance(last_error, AIProviderError):
             raise last_error
         raise AIProviderError(
-            f"{self.provider} request failed.", details={"request_id": local_request_id}
+            f"{self.provider} request failed: {last_error}", details={"request_id": local_request_id}
         ) from last_error

@@ -82,8 +82,29 @@ class GeminiProvider(AIProvider):
                     pass
 
             err_msg = str(exc)
-            if available_models:
-                err_msg += f" (Available generateContent models: {', '.join(available_models[:10])})"
+            if self.api_key:
+                try:
+                    import httpx
+
+                    async with httpx.AsyncClient(timeout=10.0) as client:
+                        resp = await client.get(
+                            f"{self.base_url}/models", params={"key": self.api_key}
+                        )
+                        if resp.status_code == 200:
+                            models_data = resp.json().get("models") or []
+                            for m in models_data:
+                                name = m.get("name", "")
+                                methods = m.get("supportedGenerationMethods") or []
+                                if "generateContent" in methods:
+                                    available_models.append(name.replace("models/", ""))
+                            if available_models:
+                                err_msg += f" (Available generateContent models: {', '.join(available_models[:10])})"
+                            else:
+                                err_msg += " (ListModels returned 200 OK but 0 generateContent models found)"
+                        else:
+                            err_msg += f" (ListModels status: {resp.status_code})"
+                except Exception as list_exc:
+                    err_msg += f" (ListModels exception: {list_exc})"
 
             return ProviderHealthCheck(
                 provider=self.name,

@@ -1,4 +1,6 @@
+import asyncio
 from collections.abc import AsyncIterator
+from typing import Any
 
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
@@ -11,12 +13,18 @@ logger = get_logger(__name__)
 
 def create_engine(database_url: str | None = None) -> AsyncEngine:
     url = database_url or settings.database_url
+    connect_args: dict[str, Any] = {}
+    if "asyncpg" in url:
+        # Disable asyncpg prepared statement caching for PgBouncer / Supavisor Transaction Pooler compatibility
+        connect_args["prepared_statement_cache_size"] = 0
+
     return create_async_engine(
         url,
         echo=settings.database_echo,
         pool_pre_ping=True,
         pool_size=settings.database_pool_size,
         max_overflow=settings.database_max_overflow,
+        connect_args=connect_args,
     )
 
 
@@ -25,9 +33,25 @@ AsyncSessionLocal = async_sessionmaker(engine, expire_on_commit=False, autoflush
 
 
 async def verify_database_connection() -> None:
-    async with engine.connect() as connection:
-        await connection.execute(text("SELECT 1"))
-    logger.info("database_connection_verified")
+    max_retries = 3
+    retry_delay = 2.0
+    for attempt in range(1, max_retries + 1):
+        try:
+            async with engine.connect() as connection:
+                await connection.execute(text("SELECT 1"))
+            logger.info("database_connection_verified")
+            return
+        except Exception as exc:
+            logger.warning(
+                f"Database connection verification attempt {attempt}/{max_retries} failed: {exc}"
+            )
+            if attempt == max_retries:
+                logger.error(
+                    "Database connection verification failed on startup; proceeding with server startup to allow /health/live probes.",
+                    extra={"error": str(exc)},
+                )
+                return
+            await asyncio.sleep(retry_delay)
 
 
 async def dispose_database_engine() -> None:
@@ -41,3 +65,4 @@ async def database_lifespan() -> AsyncIterator[None]:
         yield
     finally:
         await dispose_database_engine()
+

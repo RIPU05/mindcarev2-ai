@@ -115,7 +115,8 @@ class GeminiProvider(AIProvider):
             )
 
     async def _generate(self, prompt: str) -> AIResponse:
-        url = f"{self.base_url}/models/{self.model}:generateContent"
+        model_to_use = "gemini-2.5-flash" if self.model == "gemini-1.5-flash" else self.model
+        url = f"{self.base_url}/models/{model_to_use}:generateContent"
         params = {"key": self.api_key}
         payload = {
             "contents": [{"role": "user", "parts": [{"text": prompt}]}],
@@ -126,7 +127,7 @@ class GeminiProvider(AIProvider):
         }
         client = JsonHttpAIClient(
             provider=self.name,
-            model=self.model,
+            model=model_to_use,
             retry_policy=self.retry_policy,
             missing_config_message=(None if self.api_key else "GEMINI_API_KEY is not configured."),
         )

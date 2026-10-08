@@ -16,6 +16,7 @@ def create_engine(database_url: str | None = None) -> AsyncEngine:
     connect_args: dict[str, Any] = {}
     if "asyncpg" in url:
         # Disable asyncpg prepared statement caching for PgBouncer / Supavisor Transaction Pooler compatibility
+        connect_args["statement_cache_size"] = 0
         connect_args["prepared_statement_cache_size"] = 0
 
     return create_async_engine(
@@ -40,8 +41,10 @@ def _run_alembic_upgrade() -> None:
     current_dir = os.path.dirname(os.path.abspath(__file__))
     backend_dir = os.path.dirname(os.path.dirname(current_dir))
     ini_path = os.path.join(backend_dir, "alembic.ini")
+    alembic_dir = os.path.join(backend_dir, "alembic")
     if os.path.exists(ini_path):
         cfg = Config(ini_path)
+        cfg.set_main_option("script_location", alembic_dir)
         command.upgrade(cfg, "head")
 
 

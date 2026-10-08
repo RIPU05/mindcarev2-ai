@@ -10,24 +10,61 @@ import { journalEntries, monthlyMood, weeklyMood } from "@/lib/mock/app-data";
 import type { JournalResponse } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 
-export function PageHeader({ title, eyebrow, action }: { title: string; eyebrow?: string; action?: React.ReactNode }) {
+export function PageHeader({
+  title,
+  eyebrow,
+  action
+}: {
+  title: string;
+  eyebrow?: string;
+  action?: React.ReactNode;
+}) {
   return (
-    <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div>
-        {eyebrow && <p className="mb-1 text-sm font-medium text-stone-500">{eyebrow}</p>}
-        <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">{title}</h2>
+        {eyebrow && (
+          <p className="mb-1 text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+            {eyebrow}
+          </p>
+        )}
+        <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl dark:text-slate-50">
+          {title}
+        </h2>
       </div>
       {action}
     </div>
   );
 }
 
-export function StatCard({ label, value, helper }: { label: string; value: string; helper: string }) {
+export function StatCard({
+  label,
+  value,
+  helper,
+  icon: Icon
+}: {
+  label: string;
+  value: string;
+  helper: string;
+  icon?: React.ComponentType<{ className?: string }>;
+}) {
   return (
-    <Card>
-      <p className="text-sm text-stone-500">{label}</p>
-      <div className="mt-3 text-3xl font-semibold tracking-tight">{value}</div>
-      <p className="mt-2 text-sm text-stone-500">{helper}</p>
+    <Card className="glass-card relative overflow-hidden">
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          {label}
+        </p>
+        {Icon && (
+          <div className="grid size-10 place-items-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400">
+            <Icon className="size-5" />
+          </div>
+        )}
+      </div>
+      <div className="mt-4 text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+        {value}
+      </div>
+      <p className="mt-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+        {helper}
+      </p>
     </Card>
   );
 }
@@ -37,16 +74,21 @@ export function TrendCard() {
     <Card className="min-h-72">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h3 className="font-semibold">Weekly mood trend</h3>
-          <p className="text-sm text-stone-500">A gentle lift toward the weekend</p>
+          <h3 className="font-bold text-lg text-slate-900 dark:text-slate-100">Weekly Mood Rhythm</h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400">7-day emotional velocity & stability</p>
         </div>
-        <Badge>7 days</Badge>
+        <Badge variant="emerald">7 Days</Badge>
       </div>
-      <div className="flex h-40 items-end gap-3">
+      <div className="flex h-44 items-end gap-3 pt-4">
         {weeklyMood.map((item) => (
-          <div key={item.day} className="flex flex-1 flex-col items-center gap-2">
-            <div className="w-full rounded-t-lg bg-emerald-200 transition hover:bg-emerald-300 dark:bg-emerald-700" style={{ height: `${item.mood}%` }} />
-            <span className="text-xs text-stone-500">{item.day}</span>
+          <div key={item.day} className="group flex flex-1 flex-col items-center gap-2">
+            <div className="relative w-full rounded-t-xl bg-slate-100 dark:bg-slate-800 overflow-hidden h-36 flex items-end">
+              <div
+                className="w-full rounded-t-xl bg-gradient-to-t from-emerald-600 to-teal-400 transition-all duration-500 group-hover:from-emerald-500 group-hover:to-teal-300"
+                style={{ height: `${item.mood}%` }}
+              />
+            </div>
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">{item.day}</span>
           </div>
         ))}
       </div>
@@ -58,18 +100,25 @@ export function MoodCalendar() {
   return (
     <Card>
       <div className="mb-4 flex items-center justify-between">
-        <h3 className="font-semibold">Mood calendar</h3>
-        <Calendar className="size-5 text-stone-400" />
+        <div>
+          <h3 className="font-bold text-lg text-slate-900 dark:text-slate-100">Check-in Map</h3>
+          <p className="text-xs text-slate-500">Monthly check-in density</p>
+        </div>
+        <Calendar className="size-5 text-emerald-600 dark:text-emerald-400" />
       </div>
       <div className="grid grid-cols-10 gap-2">
         {monthlyMood.map((day) => (
           <div
             key={day.day}
             className={cn(
-              "aspect-square rounded-md border border-white text-center text-[10px] leading-7 text-stone-600 dark:border-stone-950 dark:text-stone-200",
-              day.value > 78 ? "bg-emerald-300" : day.value > 68 ? "bg-sky-200" : "bg-amber-100"
+              "aspect-square rounded-lg border text-center text-[10px] font-bold leading-7 transition-all duration-200 hover:scale-110 cursor-pointer",
+              day.value > 78
+                ? "border-emerald-300 bg-emerald-500 text-white shadow-sm shadow-emerald-500/20 dark:border-emerald-700"
+                : day.value > 68
+                ? "border-teal-300 bg-teal-400 text-slate-950 dark:border-teal-700"
+                : "border-amber-200 bg-amber-200/70 text-amber-950 dark:border-amber-800 dark:bg-amber-900/40 dark:text-amber-200"
             )}
-            title={`Day ${day.day}: ${day.value}`}
+            title={`Day ${day.day}: Score ${day.value}`}
           >
             {day.day}
           </div>
@@ -80,37 +129,52 @@ export function MoodCalendar() {
 }
 
 export function JournalList({ entries }: { entries?: JournalResponse[] }) {
-  const list = entries?.map((entry) => ({
-    id: entry.id,
-    title: entry.title ?? "Untitled entry",
-    date: new Date(entry.created_at).toLocaleDateString(),
-    mood: "Journal",
-    excerpt: entry.content,
-    tags: entry.tags,
-    words: entry.content.split(/\s+/).filter(Boolean).length
-  })) ?? journalEntries;
+  const list =
+    entries?.map((entry) => ({
+      id: entry.id,
+      title: entry.title ?? "Reflection Entry",
+      date: new Date(entry.created_at).toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+        year: "numeric"
+      }),
+      source: entry.source || "manual",
+      excerpt: entry.content,
+      tags: entry.tags && entry.tags.length ? entry.tags : ["reflection"],
+      words: entry.content.split(/\s+/).filter(Boolean).length
+    })) ??
+    journalEntries.map((entry) => ({
+      ...entry,
+      source: "manual"
+    }));
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {list.map((entry) => (
-        <Link key={entry.id} href={`/journal/${entry.id}`}>
-          <Card className="transition hover:border-stone-300 hover:shadow-lg dark:hover:border-stone-700">
-            <div className="flex items-start justify-between gap-4">
-              <div>
+        <Link key={entry.id} href={`/journal/${entry.id}`} className="block">
+          <Card className="glass-card border border-slate-200/80 hover:border-emerald-500/40 dark:border-slate-800 dark:hover:border-emerald-500/40">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="flex-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h3 className="font-semibold">{entry.title}</h3>
-                  <Badge>{entry.mood}</Badge>
+                  <h3 className="font-bold text-slate-900 text-base dark:text-slate-100">{entry.title}</h3>
+                  <Badge variant="emerald" className="uppercase text-[10px]">
+                    {entry.source}
+                  </Badge>
                 </div>
-                <p className="mt-2 text-sm text-stone-500">{entry.excerpt}</p>
+                <p className="mt-2 text-sm text-slate-600 leading-relaxed line-clamp-2 dark:text-slate-300">
+                  {entry.excerpt}
+                </p>
                 <div className="mt-4 flex flex-wrap gap-2">
                   {entry.tags.map((tag) => (
-                    <Badge key={tag}>#{tag}</Badge>
+                    <Badge key={tag} variant="sky" className="text-[11px]">
+                      #{tag}
+                    </Badge>
                   ))}
                 </div>
               </div>
-              <div className="text-right text-xs text-stone-500">
+              <div className="text-right text-xs font-semibold text-slate-400 sm:shrink-0">
                 <div>{entry.date}</div>
-                <div className="mt-1">{entry.words} words</div>
+                <div className="mt-1 text-emerald-600 dark:text-emerald-400">{entry.words} words</div>
               </div>
             </div>
           </Card>
@@ -122,13 +186,13 @@ export function JournalList({ entries }: { entries?: JournalResponse[] }) {
 
 export function EmptyState({ title, detail }: { title: string; detail: string }) {
   return (
-    <Card className="grid min-h-64 place-items-center text-center">
+    <Card className="grid min-h-64 place-items-center text-center p-8">
       <div>
-        <div className="mx-auto mb-4 grid size-12 place-items-center rounded-lg bg-stone-100 dark:bg-stone-900">
-          <FileText className="size-6 text-stone-400" />
+        <div className="mx-auto mb-4 grid size-14 place-items-center rounded-2xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400">
+          <FileText className="size-7" />
         </div>
-        <h3 className="font-semibold">{title}</h3>
-        <p className="mt-2 max-w-sm text-sm text-stone-500">{detail}</p>
+        <h3 className="font-bold text-lg text-slate-900 dark:text-slate-100">{title}</h3>
+        <p className="mt-2 max-w-md text-sm text-slate-500 leading-relaxed">{detail}</p>
       </div>
     </Card>
   );
@@ -136,13 +200,13 @@ export function EmptyState({ title, detail }: { title: string; detail: string })
 
 export function LoadingPanel() {
   return (
-    <Card className="space-y-4">
-      <Skeleton className="h-5 w-44" />
-      <Skeleton className="h-24 w-full" />
+    <Card className="space-y-4 p-6">
+      <Skeleton className="h-6 w-48 rounded-xl bg-slate-200/80 dark:bg-slate-800/80" />
+      <Skeleton className="h-28 w-full rounded-2xl bg-slate-100 dark:bg-slate-850" />
       <div className="grid gap-3 sm:grid-cols-3">
-        <Skeleton className="h-16" />
-        <Skeleton className="h-16" />
-        <Skeleton className="h-16" />
+        <Skeleton className="h-16 rounded-xl" />
+        <Skeleton className="h-16 rounded-xl" />
+        <Skeleton className="h-16 rounded-xl" />
       </div>
     </Card>
   );
@@ -151,11 +215,24 @@ export function LoadingPanel() {
 export function QuickActions() {
   return (
     <Card>
-      <h3 className="font-semibold">Quick actions</h3>
-      <div className="mt-4 grid gap-3">
-        <Link href="/journal/new"><Button className="w-full justify-between">New journal <Plus className="size-4" /></Button></Link>
-        <Button variant="secondary" className="w-full justify-between">Mood check-in <ArrowRight className="size-4" /></Button>
-        <Button variant="secondary" className="w-full justify-between">Ask assistant <Sparkles className="size-4" /></Button>
+      <h3 className="font-bold text-lg text-slate-900 dark:text-slate-100">Quick Actions</h3>
+      <p className="text-xs text-slate-500 mb-4">Serene check-in shortcuts</p>
+      <div className="grid gap-3">
+        <Link href="/journal/new">
+          <Button className="w-full justify-between py-6">
+            <span>New Reflection</span> <Plus className="size-4" />
+          </Button>
+        </Link>
+        <Link href="/mood-history">
+          <Button variant="secondary" className="w-full justify-between py-6">
+            <span>Log Check-in</span> <ArrowRight className="size-4 text-emerald-600" />
+          </Button>
+        </Link>
+        <Link href="/assistant">
+          <Button variant="outline" className="w-full justify-between py-6">
+            <span>Ask AI Assistant</span> <Sparkles className="size-4 text-emerald-500" />
+          </Button>
+        </Link>
       </div>
     </Card>
   );
@@ -163,13 +240,17 @@ export function QuickActions() {
 
 export function SearchFilters() {
   return (
-    <div className="mb-5 grid gap-3 md:grid-cols-[1fr_auto_auto]">
+    <div className="mb-6 grid gap-3 sm:grid-cols-[1fr_auto_auto]">
       <div className="relative">
-        <Search className="absolute left-3 top-3 size-4 text-stone-400" />
-        <Input className="pl-9" placeholder="Search entries" />
+        <Search className="absolute left-3.5 top-3.5 size-4 text-slate-400" />
+        <Input className="pl-10 h-11 rounded-xl" placeholder="Search entries, keywords, topics..." />
       </div>
-      <Button variant="secondary">Mood</Button>
-      <Button variant="secondary">Date</Button>
+      <Button variant="secondary" className="h-11">
+        All Sources
+      </Button>
+      <Button variant="secondary" className="h-11">
+        Sort by Date
+      </Button>
     </div>
   );
 }

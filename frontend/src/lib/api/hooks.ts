@@ -83,6 +83,8 @@ export function useAnalysis() {
   });
 }
 
+export const useTextAnalysis = useAnalysis;
+
 export function useAssistant(conversationId?: string) {
   return useMutation({
     mutationKey: queryKeys.assistant(conversationId),

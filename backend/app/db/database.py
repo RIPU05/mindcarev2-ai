@@ -32,6 +32,18 @@ engine = create_engine()
 AsyncSessionLocal = async_sessionmaker(engine, expire_on_commit=False, autoflush=False)
 
 
+async def init_database_tables() -> None:
+    try:
+        import app.models  # noqa: F401
+        from app.db.base import Base
+
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        logger.info("database_tables_initialized_successfully")
+    except Exception as exc:
+        logger.error(f"Failed to initialize database tables: {exc}")
+
+
 async def verify_database_connection() -> None:
     max_retries = 3
     retry_delay = 2.0
@@ -40,6 +52,7 @@ async def verify_database_connection() -> None:
             async with engine.connect() as connection:
                 await connection.execute(text("SELECT 1"))
             logger.info("database_connection_verified")
+            await init_database_tables()
             return
         except Exception as exc:
             logger.warning(

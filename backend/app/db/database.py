@@ -17,7 +17,6 @@ def create_engine(database_url: str | None = None) -> AsyncEngine:
     if "asyncpg" in url:
         # Disable asyncpg prepared statement caching for PgBouncer / Supavisor Transaction Pooler compatibility
         connect_args["statement_cache_size"] = 0
-        connect_args["prepared_statement_cache_size"] = 0
 
     return create_async_engine(
         url,

@@ -107,3 +107,17 @@ body {
 .animate-ambient {
   animation: ambient-glow 8s ease-in-out infinite;
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-ambient,
+  .animate-pulse {
+    animation: none !important;
+  }
+  .glass-card {
+    transition: none !important;
+  }
+  .glass-card:hover {
+    transform: none !important;
+  }
+}
+

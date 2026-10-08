@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState, useEffect, type ReactNode } from "react";
 import {
   Bell,
   ChevronLeft,
@@ -42,6 +42,17 @@ export function ProtectedAppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, signOut } = useAuth();
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setMobileOpen(false);
+        setUserMenuOpen(false);
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   const title = useMemo(
     () => titles[pathname] ?? (pathname.startsWith("/journal/") ? "Journal Entry" : "MindCare AI"),
@@ -84,8 +95,9 @@ export function ProtectedAppShell({ children }: { children: ReactNode }) {
         <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/80 backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-950/80">
           <div className="flex h-16 items-center gap-3 px-4 sm:px-6 lg:px-8">
             <button
-              className="rounded-xl p-2 text-slate-600 hover:bg-slate-100 lg:hidden dark:text-slate-300 dark:hover:bg-slate-900"
+              className="rounded-xl p-2 text-slate-600 hover:bg-slate-100 lg:hidden dark:text-slate-300 dark:hover:bg-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50"
               onClick={() => setMobileOpen(true)}
+              aria-label="Open mobile navigation menu"
             >
               <Menu className="size-5" />
             </button>
@@ -116,7 +128,9 @@ export function ProtectedAppShell({ children }: { children: ReactNode }) {
             <div className="relative">
               <button
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="flex items-center gap-2.5 rounded-xl border border-slate-200/90 bg-white p-1.5 pr-3 text-sm shadow-sm transition hover:border-emerald-500/40 dark:border-slate-800 dark:bg-slate-900"
+                aria-label="User profile options menu"
+                aria-expanded={userMenuOpen}
+                className="flex items-center gap-2.5 rounded-xl border border-slate-200/90 bg-white p-1.5 pr-3 text-sm shadow-sm transition hover:border-emerald-500/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 dark:border-slate-800 dark:bg-slate-900"
               >
                 <span className="grid size-8 place-items-center rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 text-xs font-bold text-white shadow-sm">
                   {initials}
@@ -196,7 +210,8 @@ function Sidebar({
           </Link>
           <button
             onClick={onCollapse}
-            className="rounded-xl p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-900 dark:hover:text-slate-200"
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            className="rounded-xl p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-900 dark:hover:text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50"
           >
             {collapsed ? <ChevronRight className="size-4" /> : <ChevronLeft className="size-4" />}
           </button>

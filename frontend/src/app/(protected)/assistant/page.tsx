@@ -28,6 +28,16 @@ export default function AssistantPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, assistant.isPending]);
 
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setIsMobileHistoryOpen(false);
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   function handleSendMessage(customMsg?: string) {
     const textToSend = customMsg || inputMessage.trim();
     if (!textToSend || assistant.isPending) return;

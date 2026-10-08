@@ -79,12 +79,22 @@ export function TrendCard() {
         </div>
         <Badge variant="emerald">7 Days</Badge>
       </div>
-      <div className="flex h-44 items-end gap-3 pt-4">
+      <div className="flex h-44 items-end gap-3 pt-4" role="region" aria-label="Weekly mood velocity chart">
         {weeklyMood.map((item) => (
-          <div key={item.day} className="group flex flex-1 flex-col items-center gap-2">
+          <div
+            key={item.day}
+            tabIndex={0}
+            role="graphics-symbol"
+            aria-label={`${item.day}: ${item.mood}% wellness velocity`}
+            className="group relative flex flex-1 flex-col items-center gap-2 outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 rounded-t-xl"
+          >
+            {/* Tooltip */}
+            <div className="absolute -top-10 z-20 hidden rounded-lg bg-stone-900 px-2.5 py-1 text-[11px] font-semibold text-white shadow-md group-hover:block group-focus:block dark:bg-stone-100 dark:text-stone-900 pointer-events-none whitespace-nowrap">
+              {item.day}: {item.mood}% score
+            </div>
             <div className="relative w-full rounded-t-xl bg-slate-100 dark:bg-slate-800 overflow-hidden h-36 flex items-end">
               <div
-                className="w-full rounded-t-xl bg-gradient-to-t from-emerald-600 to-teal-400 transition-all duration-500 group-hover:from-emerald-500 group-hover:to-teal-300"
+                className="w-full rounded-t-xl bg-gradient-to-t from-emerald-600 to-teal-400 transition-all duration-500 group-hover:from-emerald-500 group-hover:to-teal-300 group-focus:from-emerald-500 group-focus:to-teal-300"
                 style={{ height: `${item.mood}%` }}
               />
             </div>
@@ -106,12 +116,15 @@ export function MoodCalendar() {
         </div>
         <Calendar className="size-5 text-emerald-600 dark:text-emerald-400" />
       </div>
-      <div className="grid grid-cols-10 gap-2">
+      <div className="grid grid-cols-10 gap-2 overflow-x-auto pb-1" role="region" aria-label="Monthly check-in density map">
         {monthlyMood.map((day) => (
           <div
             key={day.day}
+            tabIndex={0}
+            role="graphics-symbol"
+            aria-label={`Day ${day.day}: Score ${day.value}`}
             className={cn(
-              "aspect-square rounded-lg border text-center text-[10px] font-bold leading-7 transition-all duration-200 hover:scale-110 cursor-pointer",
+              "group relative aspect-square rounded-lg border text-center text-[10px] font-bold leading-7 transition-all duration-200 hover:scale-110 focus-visible:scale-110 focus-visible:ring-2 focus-visible:ring-emerald-500/40 cursor-pointer outline-none",
               day.value > 78
                 ? "border-emerald-300 bg-emerald-500 text-white shadow-sm shadow-emerald-500/20 dark:border-emerald-700"
                 : day.value > 68
@@ -121,6 +134,10 @@ export function MoodCalendar() {
             title={`Day ${day.day}: Score ${day.value}`}
           >
             {day.day}
+            {/* Tooltip */}
+            <div className="absolute -top-9 left-1/2 -translate-x-1/2 z-20 hidden rounded-md bg-stone-900 px-2 py-0.5 text-[10px] font-semibold text-white shadow-md group-hover:block group-focus:block dark:bg-stone-100 dark:text-stone-900 pointer-events-none whitespace-nowrap">
+              Day {day.day}: {day.value}
+            </div>
           </div>
         ))}
       </div>

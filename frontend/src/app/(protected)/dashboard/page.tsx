@@ -23,7 +23,15 @@ export default function DashboardPage() {
   const journals = useJournalEntries();
   const moods = useMoodHistory();
 
-  const displayName = user?.user_metadata?.display_name || user?.email?.split("@")[0] || "Friend";
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good morning";
+    if (hour < 17) return "Good afternoon";
+    return "Good evening";
+  };
+
+  const name = user?.user_metadata?.display_name || user?.user_metadata?.full_name || (user?.email ? user.email.split("@")[0] : "");
+  const greetingText = name ? `${getGreeting()}, ${name}` : getGreeting();
 
   const riskLevel = dashboard.data?.risk_level ?? "unknown";
   const riskBadgeVariant =
@@ -35,11 +43,13 @@ export default function DashboardPage() {
       ? "rose"
       : "default";
 
+  const timeOfDay = new Date().getHours() < 12 ? "morning" : new Date().getHours() < 17 ? "afternoon" : "evening";
+
   return (
     <PageMotion>
       <PageHeader
-        title={`Welcome back, ${displayName}`}
-        eyebrow="A calm space to understand your well-being"
+        title={greetingText}
+        eyebrow="A calm, serene space for your daily well-being"
       />
 
       {dashboard.isLoading ? (
@@ -56,10 +66,10 @@ export default function DashboardPage() {
             <Sparkles className="size-3.5" /> MindCare AI Reflection Engine
           </div>
           <h2 className="mt-4 text-2xl font-extrabold sm:text-3xl tracking-tight">
-            How are you feeling today?
+            How are you feeling this {timeOfDay}?
           </h2>
           <p className="mt-2 text-sm text-emerald-100 leading-relaxed sm:text-base">
-            Take a moment for a quiet check-in or write down what feels true right now. Your AI companion is ready to listen and provide gentle guidance.
+            Take a quiet moment for a check-in or capture a reflection. Your AI companion is here to offer gentle support whenever you feel ready.
           </p>
         </div>
       </div>

@@ -32,16 +32,34 @@ engine = create_engine()
 AsyncSessionLocal = async_sessionmaker(engine, expire_on_commit=False, autoflush=False)
 
 
+def _run_alembic_upgrade() -> None:
+    import os
+    from alembic.config import Config
+    from alembic import command
+
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    backend_dir = os.path.dirname(os.path.dirname(current_dir))
+    ini_path = os.path.join(backend_dir, "alembic.ini")
+    if os.path.exists(ini_path):
+        cfg = Config(ini_path)
+        command.upgrade(cfg, "head")
+
+
 async def init_database_tables() -> None:
     try:
-        import app.models  # noqa: F401
-        from app.db.base import Base
+        await asyncio.to_thread(_run_alembic_upgrade)
+        logger.info("alembic_migrations_applied_successfully")
+    except Exception as alembic_exc:
+        logger.warning(f"Alembic migration auto-upgrade note: {alembic_exc}")
+        try:
+            import app.models  # noqa: F401
+            from app.db.base import Base
 
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-        logger.info("database_tables_initialized_successfully")
-    except Exception as exc:
-        logger.error(f"Failed to initialize database tables: {exc}")
+            async with engine.begin() as conn:
+                await conn.run_sync(Base.metadata.create_all)
+            logger.info("database_tables_created_via_metadata")
+        except Exception as exc:
+            logger.error(f"Failed to initialize database tables: {exc}")
 
 
 async def verify_database_connection() -> None:

@@ -36,8 +36,16 @@ export default function JournalPage() {
         <JournalList entries={entries} />
       ) : (
         <EmptyState
-          title="No journal entries yet"
-          detail="Your reflections will appear here as you log your thoughts. Click 'New Entry' above to write your first reflection."
+          title="No reflections recorded yet"
+          detail="Your inner thoughts, mood check-ins, and AI insights will be safely stored here as you log them."
+          icon={BookOpen}
+          action={
+            <Link href="/journal/new">
+              <Button className="gap-2">
+                <Plus className="size-4" /> Write your first reflection
+              </Button>
+            </Link>
+          }
         />
       )}
     </PageMotion>

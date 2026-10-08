@@ -68,36 +68,36 @@ export default function DashboardPage() {
       <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
         <CardMotion>
           <StatCard
-            label="Today's Mood"
+            label="Mindful State"
             value={dashboard.data?.latest_mood ?? "Not logged"}
-            helper={`Risk Status: ${riskLevel}`}
+            helper={`Emotional Rhythm: ${riskLevel === "low" ? "Optimal" : riskLevel}`}
             icon={Smile}
           />
         </CardMotion>
 
         <CardMotion>
           <StatCard
-            label="Journal Entries"
+            label="Journaled Memories"
             value={String(dashboard.data?.journal_count ?? 0)}
-            helper="Reflections logged in backend"
+            helper="Reflections written & saved"
             icon={BookOpen}
           />
         </CardMotion>
 
         <CardMotion>
           <StatCard
-            label="Risk Status"
-            value={riskLevel.toUpperCase()}
-            helper="AI Safety Assessment"
+            label="Safety & Well-being"
+            value={riskLevel === "low" ? "OPTIMAL" : riskLevel.toUpperCase()}
+            helper="AI Wellness & Protection Shield"
             icon={Shield}
           />
         </CardMotion>
 
         <CardMotion>
           <StatCard
-            label="Check-ins"
+            label="Daily Check-ins"
             value={String(dashboard.data?.mood_count ?? 0)}
-            helper="Total check-ins recorded"
+            helper="Wellness check-ins recorded"
             icon={Activity}
           />
         </CardMotion>

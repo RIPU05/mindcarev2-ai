@@ -48,21 +48,21 @@ export function StatCard({
   icon?: React.ComponentType<{ className?: string }>;
 }) {
   return (
-    <Card className="glass-card relative overflow-hidden">
+    <Card className="glass-card relative overflow-hidden p-5 border-stone-200/70 dark:border-slate-800">
       <div className="flex items-center justify-between">
-        <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+        <p className="text-xs font-semibold text-stone-500 dark:text-stone-400">
           {label}
         </p>
         {Icon && (
-          <div className="grid size-10 place-items-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400">
-            <Icon className="size-5" />
+          <div className="grid size-9 place-items-center rounded-xl bg-emerald-500/10 text-emerald-700 shadow-sm dark:bg-emerald-500/20 dark:text-emerald-300">
+            <Icon className="size-4.5" />
           </div>
         )}
       </div>
-      <div className="mt-4 text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+      <div className="mt-3 text-2xl font-extrabold tracking-tight text-slate-900 tabular-nums dark:text-slate-50">
         {value}
       </div>
-      <p className="mt-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+      <p className="mt-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400">
         {helper}
       </p>
     </Card>
@@ -184,15 +184,26 @@ export function JournalList({ entries }: { entries?: JournalResponse[] }) {
   );
 }
 
-export function EmptyState({ title, detail }: { title: string; detail: string }) {
+export function EmptyState({
+  title,
+  detail,
+  action,
+  icon: Icon = FileText
+}: {
+  title: string;
+  detail: string;
+  action?: React.ReactNode;
+  icon?: React.ComponentType<{ className?: string }>;
+}) {
   return (
-    <Card className="grid min-h-64 place-items-center text-center p-8">
-      <div>
-        <div className="mx-auto mb-4 grid size-14 place-items-center rounded-2xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400">
-          <FileText className="size-7" />
+    <Card className="grid min-h-64 place-items-center text-center p-8 border-dashed border-stone-300/80 dark:border-stone-800">
+      <div className="flex flex-col items-center">
+        <div className="mb-4 grid size-14 place-items-center rounded-2xl bg-emerald-50 text-emerald-600 shadow-sm dark:bg-emerald-950/40 dark:text-emerald-400">
+          <Icon className="size-7" />
         </div>
         <h3 className="font-bold text-lg text-slate-900 dark:text-slate-100">{title}</h3>
-        <p className="mt-2 max-w-md text-sm text-slate-500 leading-relaxed">{detail}</p>
+        <p className="mt-2 max-w-md text-sm text-slate-500 leading-relaxed dark:text-slate-400">{detail}</p>
+        {action && <div className="mt-6">{action}</div>}
       </div>
     </Card>
   );

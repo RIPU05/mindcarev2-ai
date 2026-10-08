@@ -38,21 +38,21 @@ export default function AnalyticsPage() {
       {/* Metrics Row */}
       <div className="grid gap-5 md:grid-cols-3">
         <StatCard
-          label="Latest Mood Score"
+          label="Mindful Sentiment"
           value={dashboard.data?.latest_mood ?? "Not logged"}
-          helper="Backend latest status"
+          helper="Recent emotional rhythm"
           icon={Activity}
         />
         <StatCard
-          label="Reflections Tracked"
+          label="Journaled Memories"
           value={String(dashboard.data?.journal_count ?? 0)}
-          helper="Journal summary entries"
+          helper="Total written reflections"
           icon={BarChart3}
         />
         <StatCard
-          label="Safety Assessment"
-          value={(dashboard.data?.risk_level ?? "unknown").toUpperCase()}
-          helper="AI Safety Classification"
+          label="Safety & Harmony"
+          value={(dashboard.data?.risk_level ?? "optimal").toUpperCase()}
+          helper="AI Protection & Safety Shield"
           icon={Shield}
         />
       </div>

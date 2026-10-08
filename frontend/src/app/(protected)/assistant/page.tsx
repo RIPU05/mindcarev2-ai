@@ -126,8 +126,8 @@ export default function AssistantPage() {
                 <div className="grid size-9 shrink-0 place-items-center rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white shadow-md">
                   <Sparkles className="size-5 animate-pulse" />
                 </div>
-                <div className="rounded-2xl bg-slate-100 p-4 text-xs font-semibold text-slate-500 dark:bg-slate-850 dark:text-slate-400">
-                  MindCare Assistant is reflecting...
+                <div className="rounded-2xl bg-stone-100/90 p-4 text-xs font-semibold text-stone-600 dark:bg-slate-850 dark:text-stone-300 animate-pulse">
+                  Gathering thoughtful insights for you...
                 </div>
               </div>
             )}
@@ -162,6 +162,7 @@ export default function AssistantPage() {
               onClick={() => handleSendMessage()}
               disabled={assistant.isPending || !inputMessage.trim()}
               className="h-12 px-6"
+              aria-label="Send message to AI assistant"
             >
               <Send className="size-4" />
             </Button>

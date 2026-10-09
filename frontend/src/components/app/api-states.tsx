@@ -20,6 +20,12 @@ export function InlineError({ error, onRetry }: { error: unknown; onRetry?: () =
             <h3 className="font-semibold text-sm text-stone-900 dark:text-stone-100">
               {normalized.code === "UNAUTHORIZED"
                 ? "Authentication Required"
+                : normalized.code === "TIMEOUT"
+                ? "Connection Timeout — Server Waking Up"
+                : normalized.code === "RATE_LIMITED"
+                ? "Request Rate Limited"
+                : normalized.code === "NETWORK_ERROR"
+                ? "Network Connection Error"
                 : "Unable to sync section data"}
             </h3>
             <p className="mt-1 text-xs text-stone-600 dark:text-stone-300">

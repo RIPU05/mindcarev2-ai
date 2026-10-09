@@ -16,7 +16,7 @@ export type RequestOptions<TBody = unknown> = {
   signal?: AbortSignal;
 };
 
-const DEFAULT_TIMEOUT_MS = 12_000;
+const DEFAULT_TIMEOUT_MS = 30_000;
 const RETRYABLE_STATUS = new Set([408, 429, 500, 502, 503, 504]);
 
 export class ApiClient {
@@ -28,7 +28,7 @@ export class ApiClient {
   constructor(config: ApiClientConfig) {
     this.baseUrl = config.baseUrl.replace(/\/$/, "");
     this.timeoutMs = config.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-    this.retries = config.retries ?? 1;
+    this.retries = config.retries ?? 2;
     this.interceptors = config.interceptors ?? [];
   }
 
@@ -90,7 +90,11 @@ export class ApiClient {
         for (const interceptor of this.interceptors) {
           await interceptor.onError?.(normalized);
         }
-        if (attempt >= this.retries || normalized.code !== "NETWORK_ERROR") throw normalized;
+        const isIdempotent = method === "GET";
+        const isRetryableError = normalized.code === "NETWORK_ERROR" || normalized.code === "TIMEOUT";
+        if (attempt >= this.retries || !isIdempotent || options.signal?.aborted || !isRetryableError) {
+          throw normalized;
+        }
       } finally {
         window.clearTimeout(timeout);
         options.signal?.removeEventListener("abort", abort);
@@ -103,8 +107,8 @@ export class ApiClient {
 
 export const apiClient = new ApiClient({
   baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://mindcare-api-6o53.onrender.com/api/v1",
-  timeoutMs: Number(process.env.NEXT_PUBLIC_API_TIMEOUT_MS ?? 12_000),
-  retries: Number(process.env.NEXT_PUBLIC_API_RETRIES ?? 1)
+  timeoutMs: Number(process.env.NEXT_PUBLIC_API_TIMEOUT_MS ?? 30_000),
+  retries: Number(process.env.NEXT_PUBLIC_API_RETRIES ?? 2)
 });
 
 async function getAuthHeader(): Promise<Record<string, string>> {

@@ -104,7 +104,7 @@ export default function AnalyticsPage() {
 
         {textAnalysis.isError ? (
           <div className="mb-4">
-            <InlineError error={textAnalysis.error} onRetry={() => textAnalysis.reset()} />
+            <InlineError error={textAnalysis.error} onRetry={handleAnalyzeText} />
           </div>
         ) : null}
 

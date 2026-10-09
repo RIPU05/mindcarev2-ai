@@ -57,6 +57,34 @@ export default function AssistantPage() {
     );
   }
 
+  const lastUserText = messages.slice().reverse().find((m) => m.role === "user")?.text;
+
+  function handleRetry() {
+    assistant.reset();
+    if (lastUserText) {
+      assistant.mutate(
+        { message: lastUserText },
+        {
+          onSuccess: (data) => {
+            if (data?.content) {
+              setMessages((prev) => [...prev, { role: "assistant", text: data.content }]);
+            }
+          }
+        }
+      );
+    }
+  }
+
+  function handleSelectConversation(title: string) {
+    setIsMobileHistoryOpen(false);
+    setMessages([
+      {
+        role: "assistant",
+        text: `Switched to conversation: "${title}". How can I support you with this today?`
+      }
+    ]);
+  }
+
   const promptSuggestions = [
     "How is my mood trending this week?",
     "Help me process today's stress",
@@ -115,10 +143,10 @@ export default function AssistantPage() {
             </div>
             <div className="space-y-2 flex-1 overflow-y-auto">
               {conversationTitles.map((title, i) => (
-                <div
+                <button
                   key={title}
-                  onClick={() => setIsMobileHistoryOpen(false)}
-                  className={`flex items-center gap-3 rounded-xl p-3 text-xs font-semibold cursor-pointer transition ${
+                  onClick={() => handleSelectConversation(title)}
+                  className={`w-full flex items-center gap-3 rounded-xl p-3 text-xs font-semibold cursor-pointer transition text-left ${
                     i === 0
                       ? "bg-emerald-500/10 text-emerald-900 border border-emerald-500/30 dark:bg-emerald-950/40 dark:text-emerald-300"
                       : "bg-slate-50 text-slate-600 hover:bg-slate-100 dark:bg-slate-900 dark:text-slate-400"
@@ -126,7 +154,7 @@ export default function AssistantPage() {
                 >
                   <MessageSquareIcon className="size-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
                   <span className="truncate">{title}</span>
-                </div>
+                </button>
               ))}
             </div>
           </div>
@@ -143,9 +171,10 @@ export default function AssistantPage() {
           </div>
           <div className="space-y-2 flex-1 overflow-y-auto">
             {conversationTitles.map((title, i) => (
-              <div
+              <button
                 key={title}
-                className={`flex items-center gap-3 rounded-xl p-3 text-xs font-semibold cursor-pointer transition ${
+                onClick={() => handleSelectConversation(title)}
+                className={`w-full flex items-center gap-3 rounded-xl p-3 text-xs font-semibold cursor-pointer transition text-left ${
                   i === 0
                     ? "bg-emerald-500/10 text-emerald-900 border border-emerald-500/30 dark:bg-emerald-950/40 dark:text-emerald-300"
                     : "bg-slate-50 text-slate-600 hover:bg-slate-100 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-850"
@@ -153,7 +182,7 @@ export default function AssistantPage() {
               >
                 <MessageSquareIcon className="size-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
                 <span className="truncate">{title}</span>
-              </div>
+              </button>
             ))}
           </div>
         </Card>
@@ -162,7 +191,7 @@ export default function AssistantPage() {
         <Card className="flex flex-col min-h-[600px] p-6 glass-panel border border-slate-200/80 dark:border-slate-800">
           {assistant.isError ? (
             <div className="mb-4">
-              <InlineError error={assistant.error} onRetry={() => assistant.reset()} />
+              <InlineError error={assistant.error} onRetry={handleRetry} />
             </div>
           ) : null}
 

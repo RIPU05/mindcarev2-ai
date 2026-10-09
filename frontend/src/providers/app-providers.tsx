@@ -3,15 +3,15 @@
 import type { ReactNode } from "react";
 
 import { QueryProvider } from "@/providers/query-provider";
-import { ThemeProvider } from "@/providers/theme-provider";
+import { SettingsProvider } from "@/providers/settings-provider";
 import { AuthProvider } from "@/providers/AuthProvider";
 
 export function AppProviders({ children }: Readonly<{ children: ReactNode }>) {
   return (
-    <ThemeProvider>
+    <SettingsProvider>
       <AuthProvider>
         <QueryProvider>{children}</QueryProvider>
       </AuthProvider>
-    </ThemeProvider>
+    </SettingsProvider>
   );
 }

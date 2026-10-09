@@ -21,6 +21,8 @@ import { navigationItems } from "@/lib/mock/app-data";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 
+import { useSettings } from "@/providers/settings-provider";
+
 const titles: Record<string, string> = {
   "/dashboard": "Dashboard",
   "/journal": "Journal",
@@ -36,18 +38,21 @@ const titles: Record<string, string> = {
 export function ProtectedAppShell({ children }: { children: ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [dark, setDark] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const pathname = usePathname();
   const router = useRouter();
   const { user, signOut } = useAuth();
+  const { toggleTheme, isDark } = useSettings();
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") {
         setMobileOpen(false);
         setUserMenuOpen(false);
+        setNotificationsOpen(false);
       }
     }
     window.addEventListener("keydown", handleKeyDown);
@@ -62,12 +67,10 @@ export function ProtectedAppShell({ children }: { children: ReactNode }) {
   const displayName = user?.user_metadata?.display_name || user?.email?.split("@")[0] || "User";
   const initials = displayName.slice(0, 2).toUpperCase();
 
-  function toggleTheme() {
-    setDark((value) => {
-      const next = !value;
-      document.documentElement.classList.toggle("dark", next);
-      return next;
-    });
+  function handleSearchSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+    router.push(`/journal?search=${encodeURIComponent(searchQuery.trim())}`);
   }
 
   async function handleSignOut() {
@@ -111,17 +114,57 @@ export function ProtectedAppShell({ children }: { children: ReactNode }) {
               </h1>
             </div>
 
-            <div className="hidden w-full max-w-sm items-center gap-2 rounded-xl border border-slate-200/90 bg-slate-50/80 px-3.5 py-2 text-sm md:flex dark:border-slate-800 dark:bg-slate-900/80">
-              <Search className="size-4 text-slate-400" />
-              <span className="text-slate-400">Search reflections, check-ins, assistant...</span>
+            <form onSubmit={handleSearchSubmit} className="hidden w-full max-w-sm items-center gap-2 rounded-xl border border-slate-200/90 bg-slate-50/80 px-3.5 py-1.5 text-sm md:flex dark:border-slate-800 dark:bg-slate-900/80">
+              <Search className="size-4 shrink-0 text-slate-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search reflections, check-ins, topics..."
+                aria-label="Search reflections, check-ins, and topics"
+                className="w-full bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400 dark:text-slate-100"
+              />
+            </form>
+
+            {/* Notifications Popover */}
+            <div className="relative">
+              <IconButton label="Notifications" onClick={() => setNotificationsOpen(!notificationsOpen)}>
+                <Bell className="size-5" />
+              </IconButton>
+              {notificationsOpen && (
+                <div
+                  className="absolute right-0 mt-2 w-80 rounded-2xl border border-slate-200/90 bg-white/95 p-4 shadow-xl backdrop-blur-xl dark:border-slate-800 dark:bg-slate-900/95"
+                  onMouseLeave={() => setNotificationsOpen(false)}
+                >
+                  <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                    <span className="font-bold text-sm text-slate-900 dark:text-slate-100">Notifications</span>
+                    <span className="text-[10px] uppercase font-bold text-emerald-600 dark:text-emerald-400">Client Preferences</span>
+                  </div>
+                  <div className="mt-3 space-y-2 text-xs text-slate-600 dark:text-slate-300">
+                    <div className="rounded-xl bg-slate-50 p-3 dark:bg-slate-850">
+                      <div className="font-semibold text-slate-900 dark:text-slate-100">Daily Reflection Prompt</div>
+                      <p className="mt-1 text-slate-500">Scheduled for 8:00 AM local time</p>
+                    </div>
+                    <div className="rounded-xl bg-slate-50 p-3 dark:bg-slate-850">
+                      <div className="font-semibold text-slate-900 dark:text-slate-100">Weekly Rhythm Report</div>
+                      <p className="mt-1 text-slate-500">Your mood velocity is steady this week</p>
+                    </div>
+                  </div>
+                  <div className="mt-3 pt-2 border-t border-slate-100 text-center dark:border-slate-800">
+                    <Link
+                      href="/settings"
+                      onClick={() => setNotificationsOpen(false)}
+                      className="text-xs font-semibold text-emerald-600 hover:underline dark:text-emerald-400"
+                    >
+                      Manage Notification Settings →
+                    </Link>
+                  </div>
+                </div>
+              )}
             </div>
 
-            <IconButton label="Notifications">
-              <Bell className="size-5" />
-            </IconButton>
-
             <IconButton label="Toggle theme" onClick={toggleTheme}>
-              {dark ? <Sun className="size-5 text-amber-400" /> : <Moon className="size-5 text-slate-600" />}
+              {isDark ? <Sun className="size-5 text-amber-400" /> : <Moon className="size-5 text-slate-600" />}
             </IconButton>
 
             {/* User Dropdown Menu */}
@@ -155,6 +198,13 @@ export function ProtectedAppShell({ children }: { children: ReactNode }) {
                     className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
                   >
                     <UserIcon className="size-4 text-emerald-600 dark:text-emerald-400" /> View Profile
+                  </Link>
+                  <Link
+                    href="/settings"
+                    onClick={() => setUserMenuOpen(false)}
+                    className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+                  >
+                    <Sparkles className="size-4 text-teal-600 dark:text-teal-400" /> Settings
                   </Link>
                   <button
                     onClick={handleSignOut}

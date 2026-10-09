@@ -266,19 +266,47 @@ export function QuickActions() {
   );
 }
 
-export function SearchFilters() {
+export function SearchFilters({
+  query = "",
+  onQueryChange,
+  sourceFilter = "all",
+  onSourceChange,
+  sortOrder = "desc",
+  onSortToggle
+}: {
+  query?: string;
+  onQueryChange?: (q: string) => void;
+  sourceFilter?: string;
+  onSourceChange?: (s: string) => void;
+  sortOrder?: "desc" | "asc";
+  onSortToggle?: () => void;
+}) {
   return (
     <div className="mb-6 grid gap-3 sm:grid-cols-[1fr_auto_auto]">
       <div className="relative">
         <Search className="absolute left-3.5 top-3.5 size-4 text-slate-400" />
-        <Input className="pl-10 h-11 rounded-xl" placeholder="Search entries, keywords, topics..." />
+        <Input
+          value={query}
+          onChange={(e) => onQueryChange?.(e.target.value)}
+          className="pl-10 h-11 rounded-xl text-sm"
+          placeholder="Search entries, keywords, topics..."
+          aria-label="Search journal entries"
+        />
       </div>
-      <Button variant="secondary" className="h-11">
-        All Sources
-      </Button>
-      <Button variant="secondary" className="h-11">
-        Sort by Date
-      </Button>
+      <button
+        onClick={() => onSourceChange?.(sourceFilter === "all" ? "manual" : "all")}
+        className="h-11 rounded-xl border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
+        aria-label="Filter entries by source"
+      >
+        Source: {sourceFilter === "all" ? "All Sources" : "Manual Only"}
+      </button>
+      <button
+        onClick={onSortToggle}
+        className="h-11 rounded-xl border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
+        aria-label="Toggle sort direction by date"
+      >
+        Sort: {sortOrder === "desc" ? "Newest First" : "Oldest First"}
+      </button>
     </div>
   );
 }

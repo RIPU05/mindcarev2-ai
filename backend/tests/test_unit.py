@@ -241,7 +241,15 @@ async def test_gemini_provider_generate():
     )
     mock_res.headers = {}
 
-    with patch("httpx.AsyncClient.post", return_value=mock_res):
+    mock_get_res = MagicMock()
+    mock_get_res.status_code = 200
+    mock_get_res.json = MagicMock(
+        return_value={
+            "models": [{"name": "models/gemini-2.5-flash", "supportedGenerationMethods": ["generateContent"]}]
+        }
+    )
+
+    with patch("httpx.AsyncClient.post", return_value=mock_res), patch("httpx.AsyncClient.get", return_value=mock_get_res):
         provider = GeminiProvider()
         provider.api_key = "dummy_key"
         res = await provider.generate_reflection("some text")

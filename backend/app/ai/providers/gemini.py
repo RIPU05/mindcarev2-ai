@@ -51,67 +51,56 @@ class GeminiProvider(AIProvider):
 
     async def health(self) -> ProviderHealthCheck:
         started = time.perf_counter()
-        try:
-            await self._generate(HEALTH_PROMPT)
-            latency_ms = int((time.perf_counter() - started) * 1000)
+        if not self.api_key:
             return ProviderHealthCheck(
                 provider=self.name,
                 model=self.model,
-                healthy=True,
-                latency_ms=latency_ms,
+                healthy=False,
+                latency_ms=0,
+                error="GEMINI_API_KEY is not configured.",
             )
+        try:
+            import httpx
+
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                resp = await client.get(f"{self.base_url}/models", params={"key": self.api_key})
+                latency_ms = int((time.perf_counter() - started) * 1000)
+                if resp.status_code == 200:
+                    models_data = resp.json().get("models") or []
+                    available_models = [
+                        m.get("name", "").replace("models/", "")
+                        for m in models_data
+                        if "generateContent" in (m.get("supportedGenerationMethods") or [])
+                    ]
+                    if available_models:
+                        return ProviderHealthCheck(
+                            provider=self.name,
+                            model=self.model,
+                            healthy=True,
+                            latency_ms=latency_ms,
+                        )
+                    return ProviderHealthCheck(
+                        provider=self.name,
+                        model=self.model,
+                        healthy=False,
+                        latency_ms=latency_ms,
+                        error="No generateContent models found for configured API key.",
+                    )
+                return ProviderHealthCheck(
+                    provider=self.name,
+                    model=self.model,
+                    healthy=False,
+                    latency_ms=latency_ms,
+                    error=f"Gemini API check returned HTTP {resp.status_code}.",
+                )
         except Exception as exc:
             latency_ms = int((time.perf_counter() - started) * 1000)
-            available_models: list[str] = []
-            if self.api_key:
-                try:
-                    import httpx
-
-                    async with httpx.AsyncClient(timeout=10.0) as client:
-                        resp = await client.get(
-                            f"{self.base_url}/models", params={"key": self.api_key}
-                        )
-                        if resp.status_code == 200:
-                            models_data = resp.json().get("models") or []
-                            for m in models_data:
-                                name = m.get("name", "")
-                                methods = m.get("supportedGenerationMethods") or []
-                                if "generateContent" in methods:
-                                    available_models.append(name.replace("models/", ""))
-                except Exception:
-                    pass
-
-            err_msg = str(exc)
-            if self.api_key:
-                try:
-                    import httpx
-
-                    async with httpx.AsyncClient(timeout=10.0) as client:
-                        resp = await client.get(
-                            f"{self.base_url}/models", params={"key": self.api_key}
-                        )
-                        if resp.status_code == 200:
-                            models_data = resp.json().get("models") or []
-                            for m in models_data:
-                                name = m.get("name", "")
-                                methods = m.get("supportedGenerationMethods") or []
-                                if "generateContent" in methods:
-                                    available_models.append(name.replace("models/", ""))
-                            if available_models:
-                                err_msg += f" (Available generateContent models: {', '.join(available_models[:10])})"
-                            else:
-                                err_msg += " (ListModels returned 200 OK but 0 generateContent models found)"
-                        else:
-                            err_msg += f" (ListModels status: {resp.status_code})"
-                except Exception as list_exc:
-                    err_msg += f" (ListModels exception: {list_exc})"
-
             return ProviderHealthCheck(
                 provider=self.name,
                 model=self.model,
                 healthy=False,
                 latency_ms=latency_ms,
-                error=err_msg,
+                error=f"Gemini API connection check failed: {exc}",
             )
 
     async def _generate(self, prompt: str) -> AIResponse:

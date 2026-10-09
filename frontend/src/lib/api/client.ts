@@ -16,7 +16,7 @@ export type RequestOptions<TBody = unknown> = {
   signal?: AbortSignal;
 };
 
-const DEFAULT_TIMEOUT_MS = 30_000;
+const DEFAULT_TIMEOUT_MS = 45_000;
 const RETRYABLE_STATUS = new Set([408, 429, 500, 502, 503, 504]);
 
 export class ApiClient {
@@ -46,6 +46,7 @@ export class ApiClient {
 
   async request<TResponse, TBody = unknown>(url: string, options: RequestOptions<TBody> = {}): Promise<TResponse> {
     const method = options.method ?? "GET";
+    const isIdempotent = method === "GET";
     let descriptor: ApiRequestDescriptor = { url, method, headers: options.headers };
 
     for (const interceptor of this.interceptors) {
@@ -78,7 +79,9 @@ export class ApiClient {
 
         if (!response.ok) {
           const error = await ApiError.fromResponse(response);
-          if (attempt < this.retries && RETRYABLE_STATUS.has(response.status)) continue;
+          if (attempt < this.retries && isIdempotent && RETRYABLE_STATUS.has(response.status)) {
+            continue;
+          }
           throw error;
         }
 
@@ -90,7 +93,6 @@ export class ApiClient {
         for (const interceptor of this.interceptors) {
           await interceptor.onError?.(normalized);
         }
-        const isIdempotent = method === "GET";
         const isRetryableError = normalized.code === "NETWORK_ERROR" || normalized.code === "TIMEOUT";
         if (attempt >= this.retries || !isIdempotent || options.signal?.aborted || !isRetryableError) {
           throw normalized;
@@ -107,12 +109,16 @@ export class ApiClient {
 
 export const apiClient = new ApiClient({
   baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://mindcare-api-6o53.onrender.com/api/v1",
-  timeoutMs: Number(process.env.NEXT_PUBLIC_API_TIMEOUT_MS ?? 30_000),
+  timeoutMs: Number(process.env.NEXT_PUBLIC_API_TIMEOUT_MS ?? 45_000),
   retries: Number(process.env.NEXT_PUBLIC_API_RETRIES ?? 2)
 });
 
 async function getAuthHeader(): Promise<Record<string, string>> {
-  const { data } = await supabase.auth.getSession();
-  const token = data.session?.access_token;
-  return token ? { Authorization: `Bearer ${token}` } : {};
+  try {
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  } catch {
+    return {};
+  }
 }

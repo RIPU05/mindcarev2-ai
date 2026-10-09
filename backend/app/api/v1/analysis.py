@@ -42,6 +42,10 @@ async def analyze_text(
     payload: TextAnalysisRequest,
     current_user: User = Depends(get_current_user),
 ) -> MoodAnalysisResponse:
+    from app.ai.limiter import user_ai_rate_limiter
+
+    await user_ai_rate_limiter.check(str(current_user.id))
+
     async with UnitOfWork() as uow:
         await validate_journal_reference(uow, current_user, payload.journal_id)
         services = get_ai_services()

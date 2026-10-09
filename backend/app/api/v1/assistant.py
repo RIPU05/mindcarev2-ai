@@ -44,6 +44,10 @@ async def chat(
     payload: AssistantChatRequest,
     current_user: User = Depends(get_current_user),
 ) -> AssistantChatResponse:
+    from app.ai.limiter import user_ai_rate_limiter
+
+    await user_ai_rate_limiter.check(str(current_user.id))
+
     async with UnitOfWork() as uow:
         if payload.journal_id is not None:
             journal = await JournalRepository(uow.session).get_for_user(

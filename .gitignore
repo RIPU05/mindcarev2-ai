@@ -69,9 +69,22 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
+# SQLite Databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Test artifacts
+junit*.xml
+coverage.xml
+
+# Embedded / untracked local directories
+mindcarev2-ai/
+
 # Local environment files
 .env
 .env.*
 !.env.example
 !frontend/.env.example
 !backend/.env.example
+

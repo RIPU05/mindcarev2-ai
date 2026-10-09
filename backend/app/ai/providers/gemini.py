@@ -115,29 +115,60 @@ class GeminiProvider(AIProvider):
             )
 
     async def _generate(self, prompt: str) -> AIResponse:
-        model_to_use = "gemini-2.5-flash" if self.model == "gemini-1.5-flash" else self.model
-        url = f"{self.base_url}/models/{model_to_use}:generateContent"
-        params = {"key": self.api_key}
-        payload = {
-            "contents": [{"role": "user", "parts": [{"text": prompt}]}],
-            "generationConfig": {
-                "temperature": 0.3,
-                "responseMimeType": "application/json",
-            },
-        }
-        client = JsonHttpAIClient(
-            provider=self.name,
-            model=model_to_use,
-            retry_policy=self.retry_policy,
-            missing_config_message=(None if self.api_key else "GEMINI_API_KEY is not configured."),
-        )
-        return await client.post_json(
-            url=url,
-            params=params,
-            payload=payload,
-            extract_text=self._extract_text,
-            extract_usage=self._extract_usage,
-        )
+        from app.ai.limiter import bound_prompt_tokens, gemini_limiter
+
+        bounded_prompt = bound_prompt_tokens(prompt)
+
+        candidate_models = []
+        primary_model = "gemini-2.5-flash" if self.model == "gemini-1.5-flash" else self.model
+        candidate_models.append(primary_model)
+        for fallback_m in ["gemini-flash-latest", "gemini-2.5-flash-lite", "gemini-1.5-flash"]:
+            if fallback_m not in candidate_models:
+                candidate_models.append(fallback_m)
+
+        last_err: Exception | None = None
+        for model_to_use in candidate_models:
+            await gemini_limiter.acquire()
+            try:
+                url = f"{self.base_url}/models/{model_to_use}:generateContent"
+                params = {"key": self.api_key}
+                payload = {
+                    "contents": [{"role": "user", "parts": [{"text": bounded_prompt}]}],
+                    "generationConfig": {
+                        "temperature": 0.3,
+                        "responseMimeType": "application/json",
+                        "maxOutputTokens": settings.gemini_max_output_tokens,
+                    },
+                }
+                client = JsonHttpAIClient(
+                    provider=self.name,
+                    model=model_to_use,
+                    retry_policy=self.retry_policy,
+                    missing_config_message=(None if self.api_key else "GEMINI_API_KEY is not configured."),
+                )
+                try:
+                    return await client.post_json(
+                        url=url,
+                        params=params,
+                        payload=payload,
+                        extract_text=self._extract_text,
+                        extract_usage=self._extract_usage,
+                    )
+                except Exception as exc:
+                    last_err = exc
+                    err_str = str(exc).lower()
+                    if "429" in err_str or "rate limit" in err_str or "404" in err_str or "not found" in err_str:
+                        logger.warning(
+                            f"Gemini model '{model_to_use}' failed with rate limit or not found. Retrying with next candidate model."
+                        )
+                        continue
+                    raise
+            finally:
+                gemini_limiter.release()
+
+        if isinstance(last_err, AIProviderError):
+            raise last_err
+        raise AIProviderError(f"All Gemini candidate models failed. Last error: {last_err}") from last_err
 
     def _extract_text(self, raw: dict[str, Any]) -> str:
         candidates = raw.get("candidates") or []

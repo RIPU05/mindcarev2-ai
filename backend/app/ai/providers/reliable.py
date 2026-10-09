@@ -141,26 +141,52 @@ class ReliableAIProviderWrapper(AIProvider):
         return await self._execute_with_failover("analyze_audio", audio_reference, context=context)
 
     async def health(self) -> ProviderHealthCheck:
-        name = (self.primary_provider_name or "gemini").lower()
-        builder = self.get_provider_builder(name)
-        if builder:
-            try:
-                prov = builder()
-                return await prov.health()
-            except Exception as e:
+        if self.primary_provider_name:
+            primary = self.primary_provider_name.lower()
+            builder = self.get_provider_builder(primary)
+            if not builder:
                 return ProviderHealthCheck(
-                    provider=name,
+                    provider=primary,
+                    model="unknown",
+                    healthy=False,
+                    latency_ms=0,
+                    error="Builder not found",
+                )
+            try:
+                primary_check = await builder().health()
+                if primary_check.healthy:
+                    return primary_check
+            except Exception as e:
+                primary_check = ProviderHealthCheck(
+                    provider=primary,
                     model="unknown",
                     healthy=False,
                     latency_ms=0,
                     error=str(e),
                 )
-        return ProviderHealthCheck(
-            provider=name,
+        else:
+            primary_check = None
+
+        priority_list = get_provider_priority_list()
+        for provider_name in priority_list:
+            if self.primary_provider_name and provider_name == self.primary_provider_name.lower():
+                continue
+            builder = self.get_provider_builder(provider_name)
+            if not builder:
+                continue
+            try:
+                check = await builder().health()
+                if check.healthy:
+                    return check
+            except Exception:
+                continue
+
+        return primary_check or ProviderHealthCheck(
+            provider=(self.primary_provider_name or "gemini").lower(),
             model="unknown",
             healthy=False,
             latency_ms=0,
-            error="Builder not found",
+            error="No healthy AI provider available",
         )
 
     async def _execute_with_failover(self, method_name: str, *args, **kwargs) -> AIResponse:

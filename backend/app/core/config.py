@@ -51,6 +51,13 @@ class Settings(BaseSettings):
     ollama_model: str = Field(default="llama3.1", alias="OLLAMA_MODEL")
     ai_timeout: float = Field(default=30.0, alias="AI_TIMEOUT")
     ai_max_retries: int = Field(default=2, alias="AI_MAX_RETRIES")
+    gemini_max_requests_per_minute: int = Field(default=4, alias="GEMINI_MAX_REQUESTS_PER_MINUTE")
+    gemini_min_request_interval_seconds: float = Field(default=15.0, alias="GEMINI_MIN_REQUEST_INTERVAL_SECONDS")
+    gemini_concurrency_limit: int = Field(default=1, alias="GEMINI_CONCURRENCY_LIMIT")
+    gemini_max_input_tokens: int = Field(default=8000, alias="GEMINI_MAX_INPUT_TOKENS")
+    gemini_max_output_tokens: int = Field(default=2048, alias="GEMINI_MAX_OUTPUT_TOKENS")
+    gemini_queue_timeout_seconds: float = Field(default=15.0, alias="GEMINI_QUEUE_TIMEOUT_SECONDS")
+    user_ai_max_requests_per_minute: int = Field(default=5, alias="USER_AI_MAX_REQUESTS_PER_MINUTE")
 
     @field_validator("backend_cors_origins", mode="before")
     @classmethod

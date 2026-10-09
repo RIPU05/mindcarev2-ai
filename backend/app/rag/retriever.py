@@ -224,14 +224,19 @@ class SqlCompositeRetriever(CompositeRetriever):
             if self.semantic_search is not None:
                 try:
                     logger.info("Attempting semantic vector search via SemanticSearchService...")
-                    results = await self.semantic_search.search(query)
+                    import asyncio
+
+                    results = await asyncio.wait_for(
+                        self.semantic_search.search(query),
+                        timeout=3.0,
+                    )
                     if results:
                         logger.info(f"Semantic search returned {len(results)} matches.")
                         RAG_RETRIEVAL_DURATION_SECONDS.observe(time.perf_counter() - started)
                         return results
-                except Exception as exc:
+                except (asyncio.TimeoutError, Exception) as exc:
                     logger.warning(
-                        f"Semantic search failed, falling back to chronological SQL: {exc}"
+                        f"Semantic search failed or timed out, falling back to chronological SQL: {exc}"
                     )
 
             import asyncio

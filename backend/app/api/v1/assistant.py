@@ -44,11 +44,19 @@ async def chat(
     payload: AssistantChatRequest,
     current_user: User = Depends(get_current_user),
 ) -> AssistantChatResponse:
+    import time
     from app.ai.limiter import user_ai_rate_limiter
+    from app.core.logging import get_logger
 
+    logger = get_logger(__name__)
+    t_start = time.perf_counter()
+
+    t0 = time.perf_counter()
     await user_ai_rate_limiter.check(str(current_user.id))
+    user_limiter_ms = int((time.perf_counter() - t0) * 1000)
 
     async with UnitOfWork() as uow:
+        t1 = time.perf_counter()
         if payload.journal_id is not None:
             journal = await JournalRepository(uow.session).get_for_user(
                 current_user.id, payload.journal_id
@@ -88,12 +96,11 @@ async def chat(
                 },
             )
         )
-        import time
+        db_setup_ms = int((time.perf_counter() - t1) * 1000)
 
+        t2 = time.perf_counter()
         from app.rag.factory import get_rag_components
         from app.rag.types import RetrievalSource, SearchQuery
-
-        start_time = time.perf_counter()
 
         rag = get_rag_components(uow.session)
         sources = [
@@ -113,6 +120,7 @@ async def chat(
         retrieved_docs = []
         if rag.retriever:
             retrieved_docs = await rag.retriever.retrieve(query)
+        rag_ms = int((time.perf_counter() - t2) * 1000)
 
         memories: list = []
         context_window = None
@@ -131,11 +139,13 @@ async def chat(
             system_prompt = built_prompt.system_prompt
             user_prompt = built_prompt.user_prompt
 
+        t3 = time.perf_counter()
         provider = rag.ai_provider
         response = await provider.analyze_text(
             user_prompt,
             system_prompt=system_prompt,
         )
+        ai_ms = int((time.perf_counter() - t3) * 1000)
 
         try:
             parsed_data = parse_json_object(response.content)
@@ -145,8 +155,7 @@ async def chat(
         except Exception:
             content = response.content
 
-        latency_ms = int((time.perf_counter() - start_time) * 1000)
-
+        t4 = time.perf_counter()
         assistant_message = await messages.add(
             AssistantMessage(
                 conversation_id=conversation.id,
@@ -164,11 +173,29 @@ async def chat(
                         "total_tokens": response.token_usage.total_tokens,
                     },
                     "retrieved_documents_count": len(retrieved_docs),
-                    "rag_latency_ms": latency_ms,
+                    "rag_latency_ms": rag_ms,
                 },
             )
         )
         await uow.commit()
+        db_commit_ms = int((time.perf_counter() - t4) * 1000)
+
+        total_ms = int((time.perf_counter() - t_start) * 1000)
+        logger.info(
+            "assistant_chat_completed",
+            extra={
+                "conversation_id": str(conversation.id),
+                "message_id": str(assistant_message.id),
+                "user_limiter_ms": user_limiter_ms,
+                "db_setup_ms": db_setup_ms,
+                "rag_ms": rag_ms,
+                "ai_ms": ai_ms,
+                "db_commit_ms": db_commit_ms,
+                "total_ms": total_ms,
+                "provider": response.provider,
+                "model": response.model,
+            },
+        )
 
         import asyncio
 

@@ -99,7 +99,7 @@ class GeminiEmbeddingProvider(EmbeddingProvider):
         }
 
         async def _call():
-            async with httpx.AsyncClient(timeout=10.0) as client:
+            async with httpx.AsyncClient(timeout=5.0) as client:
                 res = await client.post(url, params={"key": api_key}, json=payload)
                 res.raise_for_status()
                 return res.json()

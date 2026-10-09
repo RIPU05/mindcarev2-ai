@@ -433,3 +433,47 @@ async def test_reliable_provider_execute_exception_retry():
     with patch("app.ai.providers.reliable.get_provider_priority_list", return_value=["gemini"]):
         with pytest.raises(AIProviderError):
             await wrapper.analyze_text("some text")
+
+
+@pytest.mark.anyio
+async def test_gemini_provider_rate_limit_no_fallback_retry_loop():
+    from app.ai.exceptions import RateLimitError
+    from app.ai.providers.gemini import GeminiProvider
+
+    provider = GeminiProvider()
+    provider.api_key = "dummy_key"
+
+    with patch("app.ai.providers.gemini.JsonHttpAIClient.post_json", side_effect=RateLimitError("Rate limit exceeded")):
+        with patch("app.ai.limiter.gemini_limiter.acquire") as mock_acquire:
+            with pytest.raises(RateLimitError):
+                await provider.analyze_text("Test prompt")
+            # Ensure acquire was called only ONCE for the primary model, not 4 times
+            assert mock_acquire.call_count == 1
+
+
+@pytest.mark.anyio
+async def test_sql_composite_retriever_semantic_timeout_fallback():
+    import asyncio
+    from unittest.mock import AsyncMock
+
+    from app.rag.retriever import SqlCompositeRetriever
+    from app.rag.types import SearchQuery
+
+    async def slow_search(*args, **kwargs):
+        await asyncio.sleep(5.0)
+        return []
+
+    mock_semantic = MagicMock()
+    mock_semantic.search = AsyncMock(side_effect=slow_search)
+
+    retriever = SqlCompositeRetriever(retrievers=[], semantic_search=mock_semantic)
+    query = SearchQuery(text="test query", sources=())
+
+    start_time = asyncio.get_event_loop().time()
+    results = await retriever.retrieve(query)
+    elapsed = asyncio.get_event_loop().time() - start_time
+
+    assert results == []
+    # Must complete fast due to 3.0s timeout instead of waiting full 5.0s
+    assert elapsed < 4.0
+

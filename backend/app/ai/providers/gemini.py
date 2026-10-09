@@ -1,7 +1,7 @@
 import time
 from typing import Any
 
-from app.ai.exceptions import AIProviderError
+from app.ai.exceptions import AIProviderError, RateLimitError
 from app.ai.prompts import (
     HEALTH_PROMPT,
     TEXT_ANALYSIS_PROMPT,
@@ -143,12 +143,14 @@ class GeminiProvider(AIProvider):
                         extract_text=self._extract_text,
                         extract_usage=self._extract_usage,
                     )
+                except RateLimitError:
+                    raise
                 except Exception as exc:
                     last_err = exc
                     err_str = str(exc).lower()
-                    if "429" in err_str or "rate limit" in err_str or "404" in err_str or "not found" in err_str:
+                    if "404" in err_str or "not found" in err_str:
                         logger.warning(
-                            f"Gemini model '{model_to_use}' failed with rate limit or not found. Retrying with next candidate model."
+                            f"Gemini model '{model_to_use}' not found. Retrying with next candidate model."
                         )
                         continue
                     raise
